@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -93,6 +94,12 @@ export default function CompetitorsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Link
+                      href={`/lookup?brand=${encodeURIComponent(comp.name)}`}
+                      className="text-xs font-medium text-accent-strong hover:underline"
+                    >
+                      View mentions
+                    </Link>
                     <span className="text-[11px] text-muted">Strongest on</span>
                     <EngineBadge engineId={comp.strongestEngine} />
                   </div>

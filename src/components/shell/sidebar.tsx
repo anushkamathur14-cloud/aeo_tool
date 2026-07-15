@@ -12,6 +12,7 @@ import {
   MessageSquareText,
   Network,
   Radar,
+  Search,
   Settings,
   Swords,
   Wand2,
@@ -32,6 +33,7 @@ const NAV_GROUPS = [
     label: "Measure",
     items: [
       { href: "/scanner", label: "Scanner", icon: Radar },
+      { href: "/lookup", label: "Brand lookup", icon: Search },
       { href: "/prompts", label: "Prompts", icon: MessageSquareText },
       { href: "/history", label: "History", icon: History },
     ],
