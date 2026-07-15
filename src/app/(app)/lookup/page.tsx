@@ -6,8 +6,13 @@ export const metadata: Metadata = { title: "Brand lookup" };
 export default async function LookupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ brand?: string }>;
+  searchParams: Promise<{ brand?: string; category?: string }>;
 }) {
   const params = await searchParams;
-  return <LookupClient initialBrand={params.brand?.trim() ?? ""} />;
+  return (
+    <LookupClient
+      initialBrand={params.brand?.trim() ?? ""}
+      initialCategory={params.category?.trim() ?? ""}
+    />
+  );
 }

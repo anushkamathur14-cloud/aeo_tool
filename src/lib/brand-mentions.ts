@@ -7,6 +7,9 @@ import {
   type Prompt,
   type PromptCategory,
 } from "./demo-data";
+import { textMentionsBrand } from "./brand-mentions-core";
+
+export { textMentionsBrand } from "./brand-mentions-core";
 
 export type BrandMentionHit = {
   promptId: string;
@@ -43,18 +46,6 @@ export type BrandMentionSummary = {
   hits: BrandMentionHit[];
   suggestedBrands: string[];
 };
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/** Word-aware match so "CRM" doesn't false-positive inside "NovaCRM" incorrectly for short queries. */
-export function textMentionsBrand(text: string, brand: string) {
-  const trimmed = brand.trim();
-  if (!trimmed) return false;
-  const pattern = new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(trimmed)}(?:[^a-z0-9]|$)`, "i");
-  return pattern.test(text);
-}
 
 function average(values: number[]) {
   if (!values.length) return null;

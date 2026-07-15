@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
+import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowRight,
   Building2,
   Eye,
   ListOrdered,
+  Loader2,
   Percent,
   Search,
+  Tags,
 } from "lucide-react";
 import {
   Card,
@@ -24,127 +24,239 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
-import { BRAND, COMPETITORS } from "@/lib/demo-data";
-import { lookupBrandMentions } from "@/lib/brand-mentions";
+import { readProviderKeys } from "@/lib/keys";
 
-const QUICK_BRANDS = [BRAND.name, ...COMPETITORS.map((competitor) => competitor.name)];
+type LookupResponse = {
+  mode: "demo" | "hybrid";
+  brand: string;
+  category: string;
+  totalAnswers: number;
+  mentionCount: number;
+  mentionRate: number;
+  avgPosition: number | null;
+  shareOfVoice: Array<{ name: string; count: number; share: number }>;
+  byEngine: Array<{
+    engineId: string;
+    engineName: string;
+    color: string;
+    answers: number;
+    mentions: number;
+    mentionRate: number;
+    avgPosition: number | null;
+  }>;
+  results: Array<{
+    engineId: string;
+    engineName: string;
+    color: string;
+    prompt: string;
+    text: string;
+    brandMentioned: boolean;
+    brandPosition: number | null;
+    mentionedNames: string[];
+  }>;
+};
 
-export function LookupClient({ initialBrand = "" }: { initialBrand?: string }) {
-  const [query, setQuery] = useState(initialBrand);
-  const [submitted, setSubmitted] = useState(initialBrand);
+const EXAMPLES = [
+  { label: "Pedigree", brand: "Pedigree", category: "dog food" },
+  { label: "Chewy", brand: "Chewy", category: "pets" },
+  { label: "Pets", brand: "", category: "pets" },
+  { label: "Dogs", brand: "", category: "dogs" },
+  { label: "Dog food", brand: "", category: "dog food" },
+  { label: "Purina", brand: "Purina", category: "pet food" },
+];
+
+export function LookupClient({
+  initialBrand = "",
+  initialCategory = "",
+}: {
+  initialBrand?: string;
+  initialCategory?: string;
+}) {
+  const [brand, setBrand] = useState(initialBrand);
+  const [category, setCategory] = useState(initialCategory);
+  const [result, setResult] = useState<LookupResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const summary = useMemo(() => lookupBrandMentions(submitted), [submitted]);
+  const runLookup = (nextBrand = brand, nextCategory = category) => {
+    const trimmedBrand = nextBrand.trim();
+    const trimmedCategory = nextCategory.trim();
+    if (trimmedBrand.length < 2 && trimmedCategory.length < 2) {
+      setError("Enter a brand (e.g. Pedigree) and/or a category (e.g. dogs, pets).");
+      return;
+    }
 
-  const runLookup = (value: string) => {
-    const next = value.trim();
-    startTransition(() => {
-      setQuery(next);
-      setSubmitted(next);
+    setBrand(trimmedBrand);
+    setCategory(trimmedCategory);
+    setError(null);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch("/api/v1/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            brand: trimmedBrand,
+            category: trimmedCategory,
+            promptLimit: 6,
+            keys: readProviderKeys(),
+          }),
+        });
+        const payload = (await response.json()) as LookupResponse & { error?: string };
+        if (!response.ok) throw new Error(payload.error ?? "Lookup failed");
+        setResult(payload);
+      } catch (err) {
+        setResult(null);
+        setError(err instanceof Error ? err.message : "Lookup failed");
+      }
     });
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Brand mention lookup"
-        description="Search any brand and see how often it appears in the latest scan answers across engines and prompt categories."
+        title="Brand & category lookup"
+        description="Look up any brand (Pedigree, Chewy) or a category (pets, dogs, dog food) and see how often names appear across answer engines."
       />
 
       <Card>
         <CardContent className="space-y-4 p-4 sm:p-5">
           <form
-            className="flex flex-col gap-3 sm:flex-row"
+            className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_auto]"
             onSubmit={(event) => {
               event.preventDefault();
-              runLookup(query);
+              runLookup();
             }}
           >
-            <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
+            <div className="relative">
+              <Building2 className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
               <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Try NovaCRM, HubSpot, Salesforce…"
+                value={brand}
+                onChange={(event) => setBrand(event.target.value)}
+                placeholder="Brand — Pedigree, Chewy, Purina…"
                 className="h-11 w-full rounded-lg border border-border bg-surface-raised pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
                 aria-label="Brand name"
               />
             </div>
-            <Button type="submit" variant="primary" disabled={!query.trim() || isPending}>
-              Look up mentions
+            <div className="relative">
+              <Tags className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
+              <input
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                placeholder="Category — pets, dogs, dog food…"
+                className="h-11 w-full rounded-lg border border-border bg-surface-raised pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
+                aria-label="Category"
+              />
+            </div>
+            <Button type="submit" variant="primary" disabled={isPending}>
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+              {isPending ? "Looking up…" : "Look up"}
             </Button>
           </form>
 
           <div className="flex flex-wrap gap-2">
-            {QUICK_BRANDS.map((brand) => (
+            {EXAMPLES.map((example) => (
               <button
-                key={brand}
+                key={example.label}
                 type="button"
-                onClick={() => runLookup(brand)}
+                onClick={() => runLookup(example.brand, example.category)}
                 className="rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-muted-strong transition-colors hover:border-accent/40 hover:text-foreground cursor-pointer"
               >
-                {brand}
+                {example.label}
               </button>
             ))}
           </div>
+
+          {error ? (
+            <p className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
+              {error}
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
       <AnimatePresence mode="wait">
-        {!submitted ? (
+        {!result && !isPending ? (
           <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <EmptyState
               icon={Search}
-              title="Search a brand"
-              description="Enter a company name to count mentions across ChatGPT, Claude, Perplexity, Gemini, and Copilot answers from the current demo scan."
+              title="Try a brand or a category"
+              description="Examples: Pedigree + dog food, Chewy + pets, or just “dogs” / “pets” to see which brands dominate AI answers in that category."
             />
           </motion.div>
-        ) : (
+        ) : null}
+
+        {isPending ? (
+          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <Card className="flex items-center justify-center gap-3 py-16 text-sm text-muted">
+              <Loader2 className="size-5 animate-spin text-accent-strong" />
+              Generating category prompts and counting mentions across engines…
+            </Card>
+          </motion.div>
+        ) : null}
+
+        {result && !isPending ? (
           <motion.div
-            key={summary.brand}
+            key={`${result.brand}-${result.category}-${result.mentionCount}`}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="accent">{result.mode === "hybrid" ? "Hybrid live + demo" : "Demo engines"}</Badge>
+              <Badge tone="info">{result.category}</Badge>
+              {result.brand ? <Badge>{result.brand}</Badge> : <Badge>Category scan</Badge>}
+            </div>
+
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <StatCard label="Brand" value={summary.brand} icon={Building2} />
               <StatCard
-                label="Mentions"
-                value={`${summary.mentionCount}`}
-                hint={`of ${summary.totalAnswers} answers`}
+                label={result.brand ? "Brand mentions" : "Answers scanned"}
+                value={result.brand ? `${result.mentionCount}` : `${result.totalAnswers}`}
+                hint={result.brand ? `of ${result.totalAnswers} answers` : "across engines"}
                 icon={Eye}
               />
-              <StatCard label="Mention rate" value={`${summary.mentionRate}%`} icon={Percent} />
+              <StatCard
+                label="Mention rate"
+                value={result.brand ? `${result.mentionRate}%` : "—"}
+                hint={result.brand ? `${result.brand} inclusion` : "Pick a brand to score rate"}
+                icon={Percent}
+              />
               <StatCard
                 label="Avg. position"
-                value={summary.avgPosition ? `#${summary.avgPosition}` : "—"}
-                hint="when mentioned"
+                value={result.avgPosition ? `#${result.avgPosition}` : "—"}
+                hint="when the brand is mentioned"
                 icon={ListOrdered}
+              />
+              <StatCard
+                label="Top mentioned"
+                value={result.shareOfVoice[0]?.name ?? "—"}
+                hint={
+                  result.shareOfVoice[0]
+                    ? `${result.shareOfVoice[0].count} answers · ${result.shareOfVoice[0].share}%`
+                    : "No brands extracted"
+                }
+                icon={Building2}
               />
             </div>
 
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>By answer engine</CardTitle>
-                  <CardDescription>Where {summary.brand} shows up most often</CardDescription>
+                  <CardTitle>Share of mentions</CardTitle>
+                  <CardDescription>
+                    Brands appearing in {result.category} answers
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {summary.byEngine.map((engine) => (
-                    <div key={engine.engineId} className="space-y-2">
-                      <div className="flex items-center justify-between gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="size-2 rounded-full"
-                            style={{ background: engine.color }}
-                          />
-                          <span className="font-medium text-foreground">{engine.engineName}</span>
-                        </div>
+                <CardContent className="space-y-3">
+                  {result.shareOfVoice.slice(0, 8).map((item) => (
+                    <div key={item.name} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-foreground">{item.name}</span>
                         <span className="tabular-nums text-muted">
-                          {engine.mentions}/{engine.answers} · {engine.mentionRate}%
+                          {item.count} · {item.share}%
                         </span>
                       </div>
-                      <ProgressBar value={engine.mentionRate} color={engine.color} />
+                      <ProgressBar value={item.share} />
                     </div>
                   ))}
                 </CardContent>
@@ -152,22 +264,31 @@ export function LookupClient({ initialBrand = "" }: { initialBrand?: string }) {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>By prompt category</CardTitle>
-                  <CardDescription>Intent types driving the mentions</CardDescription>
+                  <CardTitle>By answer engine</CardTitle>
+                  <CardDescription>
+                    {result.brand
+                      ? `${result.brand} mention rate per engine`
+                      : "Answers generated per engine"}
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {summary.byCategory.map((category) => (
-                    <div
-                      key={category.category}
-                      className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-3 py-2.5"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{category.category}</p>
-                        <p className="text-xs text-muted">
-                          {category.mentions} mentions across {category.answers} answers
-                        </p>
+                <CardContent className="space-y-4">
+                  {result.byEngine.map((engine) => (
+                    <div key={engine.engineId} className="space-y-2">
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="size-2 rounded-full" style={{ background: engine.color }} />
+                          <span className="font-medium text-foreground">{engine.engineName}</span>
+                        </div>
+                        <span className="tabular-nums text-muted">
+                          {result.brand
+                            ? `${engine.mentions}/${engine.answers} · ${engine.mentionRate}%`
+                            : `${engine.answers} answers`}
+                        </span>
                       </div>
-                      <Badge tone="accent">{category.mentionRate}%</Badge>
+                      <ProgressBar
+                        value={result.brand ? engine.mentionRate : 100}
+                        color={engine.color}
+                      />
                     </div>
                   ))}
                 </CardContent>
@@ -176,57 +297,41 @@ export function LookupClient({ initialBrand = "" }: { initialBrand?: string }) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Matching answers</CardTitle>
+                <CardTitle>Answer sample</CardTitle>
                 <CardDescription>
-                  {summary.hits.length
-                    ? `${summary.hits.length} answer snippets that mention ${summary.brand}`
-                    : `No mentions of ${summary.brand} in the current scan set`}
+                  Generated prompts for {result.category}
+                  {result.brand ? ` with focus on ${result.brand}` : ""}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {summary.hits.length === 0 ? (
-                  <EmptyState
-                    icon={Search}
-                    title="No mentions found"
-                    description="Try another brand, or run a scan after adding competitors in the Scanner."
-                  />
-                ) : (
-                  summary.hits.map((hit, index) => (
-                    <div
-                      key={`${hit.promptId}-${hit.engineId}-${index}`}
-                      className="rounded-lg border border-border bg-surface-raised p-4"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge>{hit.engineName}</Badge>
-                        <Badge tone="info">{hit.category}</Badge>
-                        {hit.position ? <Badge tone="accent">#{hit.position}</Badge> : null}
-                        <Badge
-                          tone={
-                            hit.sentiment === "positive"
-                              ? "positive"
-                              : hit.sentiment === "negative"
-                                ? "warning"
-                                : "default"
-                          }
-                        >
-                          {hit.sentiment}
+                {result.results.slice(0, 12).map((item, index) => (
+                  <div
+                    key={`${item.engineId}-${index}`}
+                    className="rounded-lg border border-border bg-surface-raised p-4"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge>{item.engineName}</Badge>
+                      {result.brand ? (
+                        <Badge tone={item.brandMentioned ? "positive" : "warning"}>
+                          {item.brandMentioned
+                            ? `Mentioned${item.brandPosition ? ` · #${item.brandPosition}` : ""}`
+                            : "Not mentioned"}
                         </Badge>
-                      </div>
-                      <p className="mt-2 text-sm font-medium text-foreground">{hit.promptText}</p>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-strong">{hit.snippet}</p>
-                      <Link
-                        href={`/prompts/${hit.promptId}`}
-                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-accent-strong hover:underline"
-                      >
-                        Open prompt <ArrowRight className="size-3" />
-                      </Link>
+                      ) : null}
+                      {item.mentionedNames.slice(0, 4).map((name) => (
+                        <Badge key={name} tone="info">
+                          {name}
+                        </Badge>
+                      ))}
                     </div>
-                  ))
-                )}
+                    <p className="mt-2 text-sm font-medium text-foreground">{item.prompt}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-strong">{item.text}</p>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </div>
   );
