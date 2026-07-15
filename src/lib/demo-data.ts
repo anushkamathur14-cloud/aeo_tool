@@ -954,13 +954,25 @@ export const ENTITY_EDGES: EntityEdge[] = [
   { source: "g2", target: "hubspot", weight: 0.5 },
 ];
 
+export type OpportunityCategory =
+  | "Content"
+  | "Technical SEO"
+  | "Structured Data"
+  | "Knowledge Graph"
+  | "Authority"
+  | "Brand Positioning"
+  | "Comparisons"
+  | "FAQ"
+  | "Schema"
+  | "Citations";
+
 export interface Opportunity {
   id: string;
   title: string;
   description: string;
   impact: "high" | "medium" | "low";
   effort: "high" | "medium" | "low";
-  category: "Content" | "Citations" | "Technical" | "Positioning";
+  category: OpportunityCategory;
   status: "new" | "in-progress" | "done";
   estimatedLift: string;
   relatedPromptIds: string[];
@@ -970,77 +982,77 @@ export interface Opportunity {
 export const OPPORTUNITIES: Opportunity[] = [
   {
     id: "opp-001",
-    title: "Close the Gemini visibility gap on best-of prompts",
+    title: "Improve AEO visibility on Gemini best-of prompts",
     description:
-      "Gemini omits NovaCRM from 4 of 5 'best CRM' list prompts while citing Forbes and vendor sites. Gemini heavily weights structured comparison pages and high-authority listicles.",
+      "Gemini omits NovaCRM from most “best CRM” answers. Closing this AEO gap means earning citations on the listicles Gemini trusts and publishing extractable comparison content engines can quote.",
     impact: "high",
     effort: "medium",
-    category: "Citations",
+    category: "Authority",
     status: "new",
-    estimatedLift: "+8–12 pp mention rate on Gemini",
+    estimatedLift: "+8–12 pp AI mention rate on Gemini",
     relatedPromptIds: ["p-001", "p-005", "p-010"],
     actions: [
-      "Pitch inclusion in Forbes Advisor and TechRadar CRM roundups (top Gemini citations)",
-      "Publish a structured '/best-crm-alternatives' comparison hub with schema markup",
-      "Refresh Capterra and GetApp profiles — Gemini cites both frequently",
+      "Earn placement on Forbes Advisor / TechRadar CRM roundups that Gemini cites",
+      "Publish an answer-ready comparison hub with clear H2 questions and short quotable paragraphs",
+      "Refresh Capterra/GetApp profiles so third-party AEO citations stay accurate",
     ],
   },
   {
     id: "opp-002",
-    title: "Fix outdated pricing cited by Gemini",
+    title: "Fix stale facts that hurt answer-engine trust",
     description:
-      "Gemini surfaces 2024 pricing ($39/user) from stale Capterra data, creating inconsistent answers and a negative-sentiment flag on pricing prompts.",
+      "Gemini still cites outdated pricing. Inconsistent product facts reduce recommendation confidence and create negative framing in AEO answers.",
     impact: "high",
     effort: "low",
-    category: "Technical",
+    category: "Technical SEO",
     status: "in-progress",
     estimatedLift: "Removes negative sentiment on pricing prompts",
     relatedPromptIds: ["p-004"],
     actions: [
-      "Update Capterra and GetApp listings with current pricing",
-      "Add pricing FAQ with schema.org/Product markup to novacrm.io/pricing",
-      "Request re-crawl via Google Search Console",
+      "Sync canonical pricing across site, Capterra, and GetApp",
+      "Add Product + Offer schema on the pricing page",
+      "Publish an llms.txt fact file so crawlers prefer owned sources",
     ],
   },
   {
     id: "opp-003",
-    title: "Own the 'Salesforce alternatives' conversation",
+    title: "Win high-intent AEO comparison & alternatives prompts",
     description:
-      "NovaCRM appears in only 2 of 5 engines for 'Salesforce alternatives for startups' — a high-volume commercial prompt where HubSpot and Pipedrive dominate.",
+      "“Salesforce alternatives” and head-to-head prompts drive commercial AI recommendations. Competitors dominate these answers; NovaCRM needs stronger comparison coverage to improve AEO visibility.",
     impact: "high",
     effort: "medium",
-    category: "Content",
+    category: "Comparisons",
     status: "new",
     estimatedLift: "+15 pp mention rate on alternatives prompts",
     relatedPromptIds: ["p-005", "p-012"],
     actions: [
-      "Publish 'NovaCRM vs Salesforce' comparison page with migration guide",
-      "Create a startup-pricing calculator page targeting cost-focused queries",
-      "Seed authentic discussion in r/startups and r/sales (top Perplexity citations)",
+      "Ship NovaCRM vs Salesforce / HubSpot pages with migration CTAs",
+      "Add comparison tables engines can lift into answers",
+      "Seed credible third-party discussions that Perplexity can cite",
     ],
   },
   {
     id: "opp-004",
-    title: "Amplify the AI forecasting association",
+    title: "Strengthen entity associations for AI forecasting",
     description:
-      "Engines credit NovaCRM with automation and enrichment but rarely with forecasting (39/100 entity strength), despite it being a flagship capability.",
+      "Answer engines weakly associate NovaCRM with forecasting despite it being a core capability. Stronger entity relationships improve how models describe and recommend the brand.",
     impact: "medium",
     effort: "low",
-    category: "Positioning",
+    category: "Knowledge Graph",
     status: "new",
-    estimatedLift: "+20 entity strength for 'AI forecasting'",
+    estimatedLift: "+20 entity strength for AI forecasting",
     relatedPromptIds: ["p-003", "p-008"],
     actions: [
-      "Publish a forecasting accuracy benchmark report (linkable asset)",
-      "Add forecasting case studies with named customers and metrics",
-      "Update homepage H1/meta to include 'AI forecasting' terminology",
+      "Publish a forecasting benchmark with methodology and stats",
+      "Connect Product → Feature entities in schema and copy",
+      "Repeat “AI forecasting for mid-market CRM” phrasing on homepage and docs",
     ],
   },
   {
     id: "opp-005",
-    title: "Grow Reddit citation footprint",
+    title: "Build citation authority for Perplexity AEO wins",
     description:
-      "Reddit citations grew 8.2 points this quarter and drive NovaCRM's strongest Perplexity results, but presence is organic and unmanaged.",
+      "Perplexity visibility tracks community and review citations. Growing authoritative, linkable proof points increases how often NovaCRM is recommended in sourced answers.",
     impact: "medium",
     effort: "medium",
     category: "Citations",
@@ -1048,43 +1060,60 @@ export const OPPORTUNITIES: Opportunity[] = [
     estimatedLift: "+5 pp Perplexity mention rate",
     relatedPromptIds: ["p-005", "p-008", "p-009"],
     actions: [
-      "Launch founder AMA in r/sales",
-      "Monitor CRM recommendation threads and contribute genuinely helpful answers",
-      "Publish transparent pricing/limits docs that Redditors tend to link",
+      "Create cite-worthy docs (limits, pricing, security) people naturally link",
+      "Earn independent reviews with clear product positioning",
+      "Monitor recommendation threads and contribute useful, non-spammy answers",
     ],
   },
   {
     id: "opp-006",
-    title: "Ship llms.txt and clean crawler access",
+    title: "Unblock answer-engine crawlers (AEO technical baseline)",
     description:
-      "novacrm.io currently rate-limits GPTBot and lacks an llms.txt manifest. Answer engines fall back to third-party sources more than needed.",
+      "If GPTBot/ClaudeBot/PerplexityBot can’t reliably fetch owned pages, models lean on competitors’ sources. Crawler access is foundational AEO hygiene.",
     impact: "medium",
     effort: "low",
-    category: "Technical",
+    category: "Technical SEO",
     status: "done",
     estimatedLift: "+31% owned-source citations (measured)",
     relatedPromptIds: ["p-004", "p-011"],
     actions: [
-      "Allow GPTBot, ClaudeBot, PerplexityBot in robots.txt",
+      "Allow major answer-engine bots in robots.txt",
       "Publish llms.txt with canonical product facts",
-      "Add FAQ schema to docs and pricing pages",
+      "Add FAQPage schema on docs and pricing",
     ],
   },
   {
     id: "opp-007",
-    title: "Win the migration how-to prompts",
+    title: "Capture switch-intent AEO prompts with migration FAQs",
     description:
-      "Migration prompts ('migrate from Pipedrive/Salesforce') mention NovaCRM in only 1 of 5 engines. These are high-intent switching moments.",
+      "Migration how-tos are high-intent moments in AI answers. Expanding FAQ and how-to content improves inclusion when users ask how to leave Salesforce/Pipedrive/HubSpot.",
     impact: "low",
     effort: "high",
-    category: "Content",
+    category: "FAQ",
     status: "new",
     estimatedLift: "+10 pp on migration prompts",
     relatedPromptIds: ["p-007"],
     actions: [
-      "Publish step-by-step migration guides for Pipedrive, Salesforce, and HubSpot",
-      "Build a public migration tool with free CSV mapping",
-      "Get the guides listed on Import2 and Zapier resource pages",
+      "Publish step-by-step migration guides as FAQ-structured pages",
+      "Add HowTo + FAQ schema for each migration path",
+      "Link guides from pricing and comparison pages for internal authority",
+    ],
+  },
+  {
+    id: "opp-008",
+    title: "Add answer-extractable snippets on key landing pages",
+    description:
+      "Models prefer short, self-contained paragraphs that directly answer buyer questions. Improving snippet readiness raises the chance NovaCRM is quoted in AI answers.",
+    impact: "high",
+    effort: "medium",
+    category: "Content",
+    status: "new",
+    estimatedLift: "+6–9 pp share of recommendations",
+    relatedPromptIds: ["p-001", "p-003", "p-006"],
+    actions: [
+      "Rewrite hero sections into 40–60 word answer blobs",
+      "Add question-based H2s that match tracked prompts",
+      "Include one statistic with a primary-source citation on each page",
     ],
   },
 ];

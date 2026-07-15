@@ -60,8 +60,8 @@ export function OpportunitiesClient() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Opportunities"
-        description="A prioritized backlog of moves to improve how answer engines mention NovaCRM, generated from scan findings."
+        title="AEO opportunities"
+        description="Prioritized actions to improve Answer Engine Optimization (AEO) visibility — how often AI assistants mention, rank, and recommend your brand."
       />
 
       <div className="flex flex-wrap gap-1.5">

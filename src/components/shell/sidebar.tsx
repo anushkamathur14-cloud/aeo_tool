@@ -7,6 +7,7 @@ import {
   BookOpen,
   FileText,
   History,
+  Home,
   LayoutDashboard,
   Lightbulb,
   MessageSquareText,
@@ -25,6 +26,7 @@ const NAV_GROUPS = [
   {
     label: "Overview",
     items: [
+      { href: "/", label: "Home", icon: Home },
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/guide", label: "How it works", icon: BookOpen },
     ],
@@ -48,7 +50,7 @@ const NAV_GROUPS = [
   {
     label: "Improve",
     items: [
-      { href: "/opportunities", label: "Opportunities", icon: Lightbulb },
+      { href: "/opportunities", label: "AEO opportunities", icon: Lightbulb },
       { href: "/optimize", label: "Content Optimizer", icon: Wand2 },
       { href: "/reports", label: "Reports", icon: FileText },
     ],
@@ -112,8 +114,9 @@ export function Sidebar({
               <ul className="space-y-0.5">
                 {group.items.map((item) => {
                   const active =
-                    pathname === item.href ||
-                    pathname.startsWith(item.href + "/");
+                    item.href === "/"
+                      ? pathname === "/"
+                      : pathname === item.href || pathname.startsWith(item.href + "/");
                   return (
                     <li key={item.href}>
                       <Link

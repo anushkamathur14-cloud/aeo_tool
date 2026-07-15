@@ -16,13 +16,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-dvh flex-col lg:pl-64">
         {/* Demo banner */}
-        <div className="flex items-center justify-center gap-2 border-b border-accent/20 bg-accent-soft px-4 py-1.5 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-accent/20 bg-accent-soft px-4 py-1.5 text-center">
           <Sparkles className="size-3.5 shrink-0 text-accent-strong" />
           <p className="text-xs text-accent-strong">
-            Demo workspace — exploring{" "}
-            <span className="font-semibold">NovaCRM</span> with sample data. No
-            live scans are running.
+            Demo workspace — sample NovaCRM data. Use the sidebar to open Dashboard, Lookup, Opportunities, and more.
           </p>
+          <Link href="/guide" className="text-xs font-semibold text-accent-strong underline-offset-2 hover:underline">
+            How it works
+          </Link>
         </div>
 
         {/* Top bar */}

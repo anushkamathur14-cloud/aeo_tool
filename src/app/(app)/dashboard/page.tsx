@@ -173,12 +173,12 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Top opportunities */}
+        {/* Top AEO opportunities */}
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <div>
-              <CardTitle>Top opportunities</CardTitle>
-              <CardDescription>Highest-impact next moves</CardDescription>
+              <CardTitle>Top AEO opportunities</CardTitle>
+              <CardDescription>Highest-impact ways to improve AI visibility</CardDescription>
             </div>
             <Link
               href="/opportunities"
