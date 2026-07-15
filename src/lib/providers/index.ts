@@ -1,0 +1,177 @@
+export type ProviderId = "openai" | "anthropic" | "google" | "xai" | "perplexity" | "mock";
+
+export type PromptInput = {
+  prompt: string;
+  company: string;
+  competitors: string[];
+};
+
+export type ProviderResult = {
+  provider: ProviderId;
+  model: string;
+  text: string;
+  latencyMs: number;
+  sources: { title: string; url: string }[];
+  mentions: { company: string; order: number; sentiment: number }[];
+  recommendationStrength: number;
+  confidence: number;
+  answerLength: number;
+};
+
+export type ProviderKeys = Partial<Record<Exclude<ProviderId, "mock">, string>>;
+
+export interface AIProvider {
+  id: ProviderId;
+  name: string;
+  isConfigured(keys: ProviderKeys): boolean;
+  complete(input: PromptInput, keys: ProviderKeys): Promise<ProviderResult>;
+}
+
+const companyMentions = (text: string, input: PromptInput) =>
+  [input.company, ...input.competitors]
+    .map((company) => ({ company, index: text.toLowerCase().indexOf(company.toLowerCase()) }))
+    .filter((item) => item.index >= 0)
+    .sort((a, b) => a.index - b.index)
+    .map((item, index) => ({ company: item.company, order: index + 1, sentiment: 0.76 }));
+
+const normalize = (
+  provider: ProviderId,
+  model: string,
+  text: string,
+  latencyMs: number,
+  input: PromptInput,
+  sources: { title: string; url: string }[] = [],
+): ProviderResult => ({
+  provider,
+  model,
+  text,
+  latencyMs,
+  sources,
+  mentions: companyMentions(text, input),
+  recommendationStrength: text.toLowerCase().includes("recommend") ? 0.84 : 0.66,
+  confidence: 0.86,
+  answerLength: text.split(/\s+/).length,
+});
+
+class MockProvider implements AIProvider {
+  id = "mock" as const;
+  name = "BrandSignal Demo";
+  isConfigured() {
+    return true;
+  }
+  async complete(input: PromptInput) {
+    const started = performance.now();
+    const competitor = input.competitors[0] ?? "an established competitor";
+    const text = `${input.company} is a strong choice for growing teams that value fast onboarding and clear workflows. ${competitor} remains better known for enterprise breadth, but ${input.company} stands out for usability and time to value. I recommend validating integrations and total cost against your specific requirements.`;
+    return normalize("mock", "brandsignal-demo-v1", text, Math.round(performance.now() - started) + 280, input, [
+      { title: `${input.company} product overview`, url: "https://example.com/product" },
+      { title: "Independent software category report", url: "https://example.com/report" },
+    ]);
+  }
+}
+
+type RemoteConfig = {
+  id: Exclude<ProviderId, "mock">;
+  name: string;
+  model: string;
+  endpoint: string;
+  headers: (key: string) => HeadersInit;
+  body: (model: string, prompt: string) => unknown;
+  read: (payload: unknown) => string;
+};
+
+class RemoteProvider implements AIProvider {
+  id: RemoteConfig["id"];
+  name: string;
+  constructor(private config: RemoteConfig) {
+    this.id = config.id;
+    this.name = config.name;
+  }
+  isConfigured(keys: ProviderKeys) {
+    return Boolean(keys[this.id]);
+  }
+  async complete(input: PromptInput, keys: ProviderKeys) {
+    const key = keys[this.id];
+    if (!key) throw new Error(`${this.name} API key is not configured`);
+    const started = performance.now();
+    const response = await fetch(this.config.endpoint, {
+      method: "POST",
+      headers: this.config.headers(key),
+      body: JSON.stringify(this.config.body(this.config.model, input.prompt)),
+      signal: AbortSignal.timeout(45_000),
+    });
+    if (!response.ok) throw new Error(`${this.name} request failed (${response.status})`);
+    const payload: unknown = await response.json();
+    const text = this.config.read(payload);
+    return normalize(this.id, this.config.model, text, Math.round(performance.now() - started), input);
+  }
+}
+
+const valueAt = (value: unknown, path: (string | number)[]): unknown =>
+  path.reduce<unknown>((current, key) => {
+    if (typeof key === "number" && Array.isArray(current)) return current[key];
+    if (typeof key === "string" && current && typeof current === "object")
+      return (current as Record<string, unknown>)[key];
+    return undefined;
+  }, value);
+
+const textAt = (payload: unknown, path: (string | number)[]) => String(valueAt(payload, path) ?? "");
+
+export const providers: AIProvider[] = [
+  new RemoteProvider({
+    id: "openai",
+    name: "ChatGPT",
+    model: "gpt-4.1-mini",
+    endpoint: "https://api.openai.com/v1/chat/completions",
+    headers: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
+    body: (model, prompt) => ({ model, messages: [{ role: "user", content: prompt }] }),
+    read: (payload) => textAt(payload, ["choices", 0, "message", "content"]),
+  }),
+  new RemoteProvider({
+    id: "anthropic",
+    name: "Claude",
+    model: "claude-3-5-haiku-latest",
+    endpoint: "https://api.anthropic.com/v1/messages",
+    headers: (key) => ({
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+    }),
+    body: (model, prompt) => ({ model, max_tokens: 900, messages: [{ role: "user", content: prompt }] }),
+    read: (payload) => textAt(payload, ["content", 0, "text"]),
+  }),
+  new RemoteProvider({
+    id: "google",
+    name: "Gemini",
+    model: "gemini-2.0-flash",
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+    headers: (key) => ({ "Content-Type": "application/json", "x-goog-api-key": key }),
+    body: (_model, prompt) => ({ contents: [{ parts: [{ text: prompt }] }] }),
+    read: (payload) => textAt(payload, ["candidates", 0, "content", "parts", 0, "text"]),
+  }),
+  new RemoteProvider({
+    id: "xai",
+    name: "Grok",
+    model: "grok-3-mini",
+    endpoint: "https://api.x.ai/v1/chat/completions",
+    headers: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
+    body: (model, prompt) => ({ model, messages: [{ role: "user", content: prompt }] }),
+    read: (payload) => textAt(payload, ["choices", 0, "message", "content"]),
+  }),
+  new RemoteProvider({
+    id: "perplexity",
+    name: "Perplexity",
+    model: "sonar",
+    endpoint: "https://api.perplexity.ai/chat/completions",
+    headers: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
+    body: (model, prompt) => ({ model, messages: [{ role: "user", content: prompt }] }),
+    read: (payload) => textAt(payload, ["choices", 0, "message", "content"]),
+  }),
+  new MockProvider(),
+];
+
+export function getProvider(id: ProviderId) {
+  const provider = providers.find((item) => item.id === id);
+  if (!provider) throw new Error(`Unknown provider: ${id}`);
+  return provider;
+}

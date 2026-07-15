@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BrandSignal
 
-## Getting Started
+BrandSignal is an investor-demo-ready AI Visibility Intelligence platform. It shows brands where they appear in AI answers, why competitors win, and which actions are most likely to improve visibility.
 
-First, run the development server:
+## Features
+
+- Executive visibility dashboard with realistic NovaCRM demo data
+- Prompt Explorer with multi-engine answers, citations, mentions, sentiment, and explanations
+- Competitor, entity graph, historical tracking, opportunities, optimizer, and reports
+- Extensible provider adapters for ChatGPT, Claude, Gemini, Grok, and Perplexity
+- Demo-safe Scanner: mock by default; live/hybrid when session-only user keys are supplied
+- Transparent, unit-tested BrandSignal Visibility Score (0–100)
+
+## Local development
 
 ```bash
+npm install
+cp .env.example .env
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application and seeded UI work without a database. For persisted scans:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+docker compose up -d
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Then open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Verify
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Vercel deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Push this directory to `https://github.com/anushkamathur14-cloud/aeo_tool`.
+2. Import that repository in Vercel; framework detection should select Next.js.
+3. The demo UI deploys with no environment variables.
+4. To persist scan history, attach Vercel Postgres/Neon/Supabase and set `DATABASE_URL`.
+5. Run `npx prisma migrate deploy` against the production database.
 
-## Deploy on Vercel
+API keys entered in Settings are kept in the browser session and sent only over HTTPS when a live scan is run. They are not persisted by the demo. For a real multi-user release, add authentication and an encrypted secret store before enabling shared credentials.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Architecture
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/(app)` — product routes and layouts
+- `src/components` — reusable UI and visualization components
+- `src/lib/domain` — pure prompt, scoring, and explanation logic
+- `src/lib/providers` — common provider adapter interface
+- `src/app/api/v1/scan` — Zod-validated scan endpoint (24-prompt cap)
+- `prisma` — production-ready Postgres schema and demo seed
+
+BrandSignal intentionally uses analytics views rather than a chatbot interface.

@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum JourneyStage {
+  AWARENESS
+  DISCOVERY
+  RESEARCH
+  COMPARISON
+  PURCHASE
+  SUPPORT
+}
+
+model Organization {
+  id          String               @id @default(cuid())
+  name        String
+  slug        String               @unique
+  brands      Brand[]
+  memberships Membership[]
+  credentials ProviderCredential[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  memberships Membership[]
+  createdAt   DateTime     @default(now())
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  role           String       @default("OWNER")
+  userId         String
+  organizationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model Brand {
+  id             String               @id @default(cuid())
+  name           String
+  website        String
+  industry       String
+  country        String
+  audience       String
+  products       String[]
+  organizationId String
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  competitors    Competitor[]
+  scans          Scan[]
+  snapshots      VisibilitySnapshot[]
+  opportunities  Opportunity[]
+  entityNodes    EntityNode[]
+  reports        Report[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([organizationId])
+}
+
+model Competitor {
+  id      String @id @default(cuid())
+  name    String
+  website String
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+}
+
+model Scan {
+  id              String           @id @default(cuid())
+  status          ScanStatus       @default(QUEUED)
+  visibilityScore Float?
+  config          Json
+  startedAt       DateTime?
+  completedAt     DateTime?
+  brandId         String
+  brand           Brand            @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  prompts         Prompt[]
+  createdAt       DateTime         @default(now())
+
+  @@index([brandId, createdAt])
+}
+
+model Prompt {
+  id        String          @id @default(cuid())
+  text      String
+  stage     JourneyStage
+  scanId    String
+  scan      Scan            @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  responses PromptResponse[]
+
+  @@index([scanId, stage])
+}
+
+model PromptResponse {
+  id                     String   @id @default(cuid())
+  provider               String
+  model                   String
+  rawText                 String
+  latencyMs               Int
+  sources                 Json
+  mentions                Json
+  sentiment               Float
+  recommendationStrength Float
+  confidence             Float
+  answerLength            Int
+  promptId                String
+  prompt                  Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  createdAt               DateTime @default(now())
+
+  @@index([promptId, provider])
+}
+
+model VisibilitySnapshot {
+  id         String   @id @default(cuid())
+  score      Float
+  components Json
+  engine     String?
+  capturedAt DateTime @default(now())
+  brandId    String
+  brand      Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId, capturedAt])
+}
+
+model Opportunity {
+  id           String   @id @default(cuid())
+  category     String
+  title        String
+  rationale    String
+  effort       Int
+  impact       Int
+  expectedLift Float
+  confidence   Float
+  status       String   @default("OPEN")
+  brandId      String
+  brand        Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([brandId, status])
+}
+
+model EntityNode {
+  id      String       @id @default(cuid())
+  label   String
+  type    String
+  weight  Float        @default(1)
+  brandId String
+  brand   Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  outgoing EntityEdge[] @relation("Source")
+  incoming EntityEdge[] @relation("Target")
+
+  @@index([brandId])
+}
+
+model EntityEdge {
+  id       String     @id @default(cuid())
+  relation String
+  weight   Float      @default(1)
+  sourceId String
+  targetId String
+  source   EntityNode @relation("Source", fields: [sourceId], references: [id], onDelete: Cascade)
+  target   EntityNode @relation("Target", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId, relation])
+}
+
+model ProviderCredential {
+  id             String       @id @default(cuid())
+  provider       String
+  encryptedKey   String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, provider])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  format    String
+  metadata  Json
+  brandId   String
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([brandId, createdAt])
+}
