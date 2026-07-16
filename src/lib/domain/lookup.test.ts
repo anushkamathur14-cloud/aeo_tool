@@ -5,6 +5,7 @@ import {
   peersForCategory,
   summarizeLookupResults,
 } from "./lookup";
+import { buildLookupInsights } from "./lookup-insights";
 
 describe("on-demand category lookup", () => {
   it("resolves pet-category peers for Pedigree and Chewy style queries", () => {
@@ -95,5 +96,82 @@ describe("on-demand category lookup", () => {
     expect(summary.totalAnswers).toBe(8);
     expect(summary.mentionCount).toBeGreaterThan(0);
     expect(summary.shareOfVoice.some((item) => item.name === "Pedigree")).toBe(true);
+  });
+
+  it("builds story-first lookup insights for the results page", () => {
+    const results = [
+      {
+        engineId: "chatgpt",
+        engineName: "ChatGPT",
+        color: "#10a37f",
+        prompt: "What is the best CRM for startups?",
+        text: "HubSpot and Pipedrive lead for startups based on pricing and ease of use.",
+        brandMentioned: false,
+        brandPosition: null,
+        mentionedNames: ["HubSpot", "Pipedrive", "Salesforce"],
+      },
+      {
+        engineId: "gemini",
+        engineName: "Gemini",
+        color: "#4285f4",
+        prompt: "What is the best CRM for startups?",
+        text: "Salesforce and HubSpot are frequently recommended.",
+        brandMentioned: false,
+        brandPosition: null,
+        mentionedNames: ["Salesforce", "HubSpot"],
+      },
+      {
+        engineId: "chatgpt",
+        engineName: "ChatGPT",
+        color: "#10a37f",
+        prompt: "BrandSignal vs HubSpot for AI visibility",
+        text: "BrandSignal focuses on AI visibility; HubSpot is a broader CRM.",
+        brandMentioned: true,
+        brandPosition: 1,
+        mentionedNames: ["BrandSignal", "HubSpot"],
+      },
+    ];
+
+    const insights = buildLookupInsights({
+      brand: "BrandSignal",
+      category: "AI visibility",
+      mode: "demo",
+      mentionRate: 33,
+      mentionCount: 1,
+      totalAnswers: 3,
+      avgPosition: 1,
+      shareOfVoice: [
+        { name: "HubSpot", share: 40 },
+        { name: "BrandSignal", share: 20 },
+      ],
+      byEngine: [
+        {
+          engineName: "ChatGPT",
+          mentions: 1,
+          answers: 2,
+          mentionRate: 50,
+          avgPosition: 1,
+        },
+        {
+          engineName: "Gemini",
+          mentions: 0,
+          answers: 1,
+          mentionRate: 0,
+          avgPosition: null,
+        },
+      ],
+      results,
+      intentCounts: { "best-of": 2, comparison: 1 },
+    });
+
+    expect(insights.executive.health).toBeGreaterThan(0);
+    expect(insights.executive.expectedLift).toBeGreaterThan(0);
+    expect(insights.spotlight?.prompt).toContain("CRM");
+    expect(insights.spotlight?.ranking[0]).toBe("HubSpot");
+    expect(insights.promptWinners.some((row) => row.brandWon)).toBe(true);
+    expect(insights.fixQueue[0]?.priority).toBe(1);
+    expect(insights.fixQueue[0]?.confidence).toBeGreaterThan(80);
+    expect(insights.brandUnderstanding.strong.length).toBeGreaterThan(0);
+    expect(insights.explorer).toHaveLength(2);
   });
 });
