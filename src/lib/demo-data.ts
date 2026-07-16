@@ -1117,6 +1117,23 @@ export const OPPORTUNITIES: Opportunity[] = [
       "Include one statistic with a primary-source citation on each page",
     ],
   },
+  {
+    id: "opp-009",
+    title: "Win navigational fan-outs that justify recommendations",
+    description:
+      "Before recommending on commercial prompts, answer engines fan out into informational evidence and brand-by-name checks (pricing, vs-pages, reviews). Streamora needs those navigational pages to resolve cleanly — informational content is proof, not a funnel entry.",
+    impact: "high",
+    effort: "medium",
+    category: "Content",
+    status: "new",
+    estimatedLift: "+10–14 pp recommendation rate on commercial prompts",
+    relatedPromptIds: ["p-001", "p-002", "p-004"],
+    actions: [
+      "Publish canonical Streamora pricing, “what is Streamora”, and Streamora vs Netflix pages",
+      "Pair every commercial landing page with supporting evidence topics engines search during fan-out",
+      "Keep brand facts consistent across site, schema, and third-party profiles so navigational checks agree",
+    ],
+  },
 ];
 
 export interface Report {

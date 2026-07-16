@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { runClassificationAgent } from "./classification-agent";
 import { runEvaluationAgent } from "./evaluation-agent";
+import { runFanoutAgent } from "./fanout-agent";
 import { runFaqAgent } from "./faq-agent";
 import { estimateCostUsd } from "./types";
 
@@ -39,7 +40,24 @@ describe("lookup agents", () => {
     expect(evaluated[0].brandPosition).toBe(1);
   });
 
-  it("classifies intents and builds FAQs", () => {
+  it("builds a commercial fan-out evidence map", () => {
+    const { evidenceMap } = runFanoutAgent({
+      brand: "Streamora",
+      category: "OTT streaming",
+      peers: ["Netflix", "Hulu", "Disney+"],
+      commercialRoots: ["What is the best OTT streaming service in 2026?"],
+      scoreLeaves: true,
+    });
+    expect(evidenceMap.roots).toBe(1);
+    expect(evidenceMap.fanouts).toBeGreaterThanOrEqual(4);
+    expect(evidenceMap.intentMix.informational).toBeGreaterThan(0);
+    expect(evidenceMap.intentMix.navigational).toBeGreaterThan(0);
+    expect(evidenceMap.brandInNavigationalQueries).toBeGreaterThan(0);
+    expect(evidenceMap.nodes.some((node) => node.role === "evidence")).toBe(true);
+    expect(evidenceMap.nodes.some((node) => node.role === "brand-check")).toBe(true);
+  });
+
+  it("classifies intents and builds FAQs with fan-out context", () => {
     const classified = runClassificationAgent({
       brand: "Netflix",
       category: "OTT streaming",
@@ -54,6 +72,14 @@ describe("lookup agents", () => {
     });
     expect(classified.classified[0].intent).toBe("best-of");
 
+    const { evidenceMap } = runFanoutAgent({
+      brand: "Netflix",
+      category: "OTT streaming",
+      peers: ["Hulu", "Disney+"],
+      commercialRoots: ["What is the best OTT platform?"],
+      scoreLeaves: true,
+    });
+
     const faqs = runFaqAgent({
       brand: "Netflix",
       category: "OTT streaming",
@@ -65,7 +91,9 @@ describe("lookup agents", () => {
       topBrands: [{ name: "Netflix", share: 40 }],
       totalCostUsd: 0,
       liveEngines: [],
+      evidenceMap,
     });
-    expect(faqs.faqs.length).toBeGreaterThan(2);
+    expect(faqs.faqs.length).toBeGreaterThan(4);
+    expect(faqs.faqs.some((item) => /fan-out/i.test(item.question))).toBe(true);
   });
 });

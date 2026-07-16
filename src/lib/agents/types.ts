@@ -1,4 +1,4 @@
-export type AgentRole = "query" | "evaluation" | "classification" | "faq";
+export type AgentRole = "query" | "evaluation" | "classification" | "fanout" | "faq";
 
 export type AgentEvent = {
   agent: AgentRole;

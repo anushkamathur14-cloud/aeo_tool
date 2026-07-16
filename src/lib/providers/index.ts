@@ -4,6 +4,8 @@ export type PromptInput = {
   prompt: string;
   company: string;
   competitors: string[];
+  category?: string;
+  engineLabel?: string;
 };
 
 export type ProviderResult = {
@@ -61,13 +63,30 @@ class MockProvider implements AIProvider {
   }
   async complete(input: PromptInput) {
     const started = performance.now();
-    const competitor = input.competitors[0] ?? "an established competitor";
-    const text = `${input.company} is a strong choice for growing teams that value fast onboarding and clear workflows. ${competitor} remains better known for enterprise breadth, but ${input.company} stands out for usability and time to value. I recommend validating integrations and total cost against your specific requirements.`;
-    return normalize("mock", "brandsignal-demo-v1", text, Math.round(performance.now() - started) + 280, input, [
-      { title: `${input.company} product overview`, url: "https://example.com/product" },
-      { title: "Independent software category report", url: "https://example.com/report" },
-    ]);
+    // Lazy import keeps provider module free of circular init issues with domain helpers.
+    const { buildMockLookupAnswer } = await import("../domain/lookup");
+    const mock = buildMockLookupAnswer({
+      prompt: input.prompt,
+      brand: input.company,
+      category: input.category ?? "consumer brands",
+      peers: input.competitors,
+      engine: input.engineLabel ?? "ChatGPT",
+    });
+    return normalize(
+      "mock",
+      "brandsignal-demo-v1",
+      mock.text,
+      Math.round(performance.now() - started) + 220 + (hashQuick(input.prompt) % 180),
+      input,
+      mock.sources,
+    );
   }
+}
+
+function hashQuick(value: string) {
+  let total = 0;
+  for (let index = 0; index < value.length; index += 1) total = (total * 31 + value.charCodeAt(index)) >>> 0;
+  return total;
 }
 
 type RemoteConfig = {

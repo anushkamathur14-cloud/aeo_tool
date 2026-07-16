@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Building2,
   Eye,
+  GitBranch,
   KeyRound,
   ListOrdered,
   Loader2,
@@ -76,6 +77,27 @@ type LookupResponse = {
   faqs?: Array<{ question: string; answer: string; confidence: number }>;
   intentCounts?: Record<string, number>;
   agentTrace?: Array<{ agent: string; at: string; message: string }>;
+  evidenceMap?: {
+    roots: number;
+    fanouts: number;
+    intentMix: Record<string, number>;
+    evidenceShare: number;
+    navigationalShare: number;
+    brandInNavigationalQueries: number;
+    brandWinsNavigational: number;
+    brandWinsEvidence: number;
+    insight: string;
+    nodes: Array<{
+      id: string;
+      parentId: string | null;
+      query: string;
+      intent: "commercial" | "informational" | "navigational";
+      role: "root" | "evidence" | "brand-check";
+      brandInQuery: boolean;
+      brandMentioned: boolean | null;
+      note: string;
+    }>;
+  };
 };
 
 const EXAMPLES = [
@@ -128,7 +150,7 @@ export function LookupClient({
     const trimmedBrand = nextBrand.trim();
     const trimmedCategory = nextCategory.trim();
     if (trimmedBrand.length < 2 && trimmedCategory.length < 2) {
-      setError("Enter a brand (e.g. Pedigree) and/or a category (e.g. dogs, pets).");
+      setError("Enter a brand (e.g. Streamora) and/or a category (e.g. OTT streaming).");
       return;
     }
 
@@ -263,7 +285,7 @@ export function LookupClient({
               <input
                 value={brand}
                 onChange={(event) => setBrand(event.target.value)}
-                placeholder="Brand — Pedigree, Chewy, Purina…"
+                placeholder="Brand — Streamora, Netflix, Chewy…"
                 className="h-11 w-full rounded-lg border border-border bg-surface-raised pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
                 aria-label="Brand name"
               />
@@ -273,7 +295,7 @@ export function LookupClient({
               <input
                 value={category}
                 onChange={(event) => setCategory(event.target.value)}
-                placeholder="Category — pets, dogs, dog food…"
+                placeholder="Category — OTT streaming, pets, dog food…"
                 className="h-11 w-full rounded-lg border border-border bg-surface-raised pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
                 aria-label="Category"
               />
@@ -324,8 +346,8 @@ export function LookupClient({
               title={mode === "live" ? "Run a live brand or category lookup" : "Run a demo lookup"}
               description={
                 mode === "live"
-                  ? "Live mode runs Query → Evaluation → Classification → FAQ agents against your keyed engines."
-                  : "Demo mode runs the same 4-agent pipeline on sample OTT/streaming answers (Streamora, Netflix, Hulu, etc.)."
+                  ? "Live mode runs Query → Evaluation → Classification → Fan-out → FAQ against your keyed engines."
+                  : "Demo mode runs the same agent pipeline on realistic OTT/streaming sample answers (Streamora, Netflix, Hulu, etc.)."
               }
             />
           </motion.div>
@@ -365,6 +387,101 @@ export function LookupClient({
                 <Badge tone="info">Est. cost ${result.cost.totalUsd.toFixed(4)}</Badge>
               ) : null}
             </div>
+
+            {result.evidenceMap ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <GitBranch className="size-4 text-accent-strong" />
+                    Fan-out evidence map
+                  </CardTitle>
+                  <CardDescription>
+                    Commercial prompts expand into informational proof and navigational brand-checks
+                    before engines recommend — recommendation beats citation.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-lg border border-border bg-surface-raised p-3">
+                      <p className="text-[11px] text-muted">Fan-outs</p>
+                      <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+                        {result.evidenceMap.fanouts}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-border bg-surface-raised p-3">
+                      <p className="text-[11px] text-muted">Evidence share</p>
+                      <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+                        {result.evidenceMap.evidenceShare}%
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-border bg-surface-raised p-3">
+                      <p className="text-[11px] text-muted">Navigational share</p>
+                      <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+                        {result.evidenceMap.navigationalShare}%
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-border bg-surface-raised p-3">
+                      <p className="text-[11px] text-muted">Brand-check wins</p>
+                      <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+                        {result.evidenceMap.brandWinsNavigational}/
+                        {result.evidenceMap.brandInNavigationalQueries || "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm leading-relaxed text-muted-strong">
+                    {result.evidenceMap.insight}
+                  </p>
+
+                  <div className="space-y-3">
+                    {result.evidenceMap.nodes
+                      .filter((node) => node.role === "root")
+                      .map((root) => {
+                        const children = result.evidenceMap!.nodes.filter(
+                          (node) => node.parentId === root.id,
+                        );
+                        return (
+                          <div
+                            key={root.id}
+                            className="rounded-lg border border-border bg-surface-raised p-4"
+                          >
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge tone="accent">Commercial root</Badge>
+                              {root.brandInQuery ? <Badge tone="info">Brand in query</Badge> : null}
+                            </div>
+                            <p className="mt-2 text-sm font-medium text-foreground">{root.query}</p>
+                            <div className="mt-3 space-y-2 border-l border-border pl-3">
+                              {children.map((child) => (
+                                <div key={child.id} className="space-y-1">
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <Badge
+                                      tone={
+                                        child.intent === "navigational" ? "warning" : "info"
+                                      }
+                                    >
+                                      {child.intent}
+                                    </Badge>
+                                    {child.brandInQuery ? (
+                                      <Badge>Brand in fan-out</Badge>
+                                    ) : null}
+                                    {child.brandMentioned === true ? (
+                                      <Badge tone="positive">Mentioned</Badge>
+                                    ) : child.brandMentioned === false ? (
+                                      <Badge tone="warning">Missed</Badge>
+                                    ) : null}
+                                  </div>
+                                  <p className="text-sm text-foreground">{child.query}</p>
+                                  <p className="text-[11px] text-muted">{child.note}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
 
             {result.faqs?.length ? (
               <Card>
@@ -410,7 +527,7 @@ export function LookupClient({
                   <Card>
                     <CardHeader>
                       <CardTitle>Agent trace</CardTitle>
-                      <CardDescription>Query → Evaluation → Classification → FAQ</CardDescription>
+                      <CardDescription>Query → Evaluation → Classification → Fan-out → FAQ</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {result.agentTrace.slice(-8).map((event, index) => (

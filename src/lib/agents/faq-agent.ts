@@ -1,3 +1,4 @@
+import type { EvidenceMap } from "./fanout-agent";
 import { createAgentLog } from "./types";
 
 export type FaqItem = {
@@ -20,6 +21,7 @@ export function runFaqAgent(args: {
   topBrands: Array<{ name: string; share: number }>;
   totalCostUsd: number;
   liveEngines: string[];
+  evidenceMap?: EvidenceMap;
 }) {
   const log = createAgentLog();
   log.push("faq", "Generating FAQ explanations from classified results");
@@ -54,14 +56,33 @@ export function runFaqAgent(args: {
           : "Demo mode used sample answers only — no provider APIs were called.",
       confidence: 0.97,
     },
-    {
-      question: `What should I do next to improve AEO visibility for ${brand}?`,
-      answer: args.brand
-        ? `Prioritize comparison and best-of content for ${args.category}, earn third-party citations that answer engines trust, and publish short quotable FAQs that directly answer the prompts where ${brand} is missing.`
-        : `Pick a brand in ${args.category} and re-run a live lookup to see mention gaps, then target the prompts where leaders dominate.`,
-      confidence: 0.84,
-    },
   ];
+
+  if (args.evidenceMap) {
+    const map = args.evidenceMap;
+    faqs.push({
+      question: "What fan-outs happen before a recommendation?",
+      answer: `Commercial prompts expanded into ${map.fanouts} fan-out queries (~${map.evidenceShare}% informational evidence, ~${map.navigationalShare}% navigational brand-checks). Recommendation — not citation — is the goal; informational pages mainly serve as proof engines use when deciding who to recommend.`,
+      confidence: 0.9,
+    });
+    faqs.push({
+      question: args.brand
+        ? `Does ${brand} survive navigational brand-checks?`
+        : "Do navigational brand-checks matter?",
+      answer: args.brand
+        ? `${brand} appeared in ${map.brandInNavigationalQueries} navigational fan-out queries and won ${map.brandWinsNavigational} of those brand-checks. ${map.insight}`
+        : map.insight,
+      confidence: 0.87,
+    });
+  }
+
+  faqs.push({
+    question: `What should I do next to improve AEO visibility for ${brand}?`,
+    answer: args.brand
+      ? `Prioritize commercial prompts where recommendations happen, then back them with informational proof (pricing explainers, comparison criteria, methodology) and clean navigational pages (${brand} pricing, vs-pages, reviews) so fan-out brand-checks resolve in your favor.`
+      : `Pick a brand in ${args.category} and re-run a live lookup to see mention gaps, then target the commercial prompts where leaders dominate.`,
+    confidence: 0.84,
+  });
 
   log.push("faq", `Prepared ${faqs.length} FAQ answers`);
   return { log: log.events, faqs };

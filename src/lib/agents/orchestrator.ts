@@ -6,6 +6,7 @@ import {
 import type { ProviderId, ProviderKeys } from "@/lib/providers";
 import { runClassificationAgent } from "./classification-agent";
 import { runEvaluationAgent } from "./evaluation-agent";
+import { isCommercialPrompt, runFanoutAgent } from "./fanout-agent";
 import { runFaqAgent } from "./faq-agent";
 import { runQueryAgent } from "./query-agent";
 import type { AgentEvent } from "./types";
@@ -19,7 +20,7 @@ const ENGINE_MAP = [
 ];
 
 /**
- * Orchestrates Query → Evaluation → Classification → FAQ agents.
+ * Orchestrates Query → Evaluation → Classification → Fan-out → FAQ agents.
  */
 export async function runLookupAgentPipeline(args: {
   input: OnDemandLookupInput & { mode: "live" | "demo" };
@@ -53,15 +54,18 @@ export async function runLookupAgentPipeline(args: {
       engineId: engine.id,
       engineName: engine.name,
       color: engine.color,
+      category,
     })),
   );
 
   const query = await runQueryAgent({
-    jobs: jobsWithMeta.map(({ prompt, company, competitors, providerId }) => ({
+    jobs: jobsWithMeta.map(({ prompt, company, competitors, providerId, category: jobCategory, engineName }) => ({
       prompt,
       company,
       competitors,
       providerId,
+      category: jobCategory,
+      engineLabel: engineName,
     })),
     keys,
     mode,
@@ -108,6 +112,25 @@ export async function runLookupAgentPipeline(args: {
     results: evaluation.evaluated,
   });
 
+  const commercialRoots = [
+    ...new Set(
+      prompts
+        .map((prompt) => prompt.text)
+        .filter((text) => isCommercialPrompt(text)),
+    ),
+  ];
+  // Fall back so evidence map always has something to expand
+  const fanoutRoots =
+    commercialRoots.length > 0 ? commercialRoots : prompts.slice(0, 2).map((prompt) => prompt.text);
+
+  const fanout = runFanoutAgent({
+    brand,
+    category,
+    peers,
+    commercialRoots: fanoutRoots,
+    scoreLeaves: true,
+  });
+
   const faq = runFaqAgent({
     brand,
     category,
@@ -119,12 +142,14 @@ export async function runLookupAgentPipeline(args: {
     topBrands: summary.shareOfVoice.map((row) => ({ name: row.name, share: row.share })),
     totalCostUsd: query.totalCostUsd,
     liveEngines: [...new Set(evaluation.evaluated.map((row) => row.engineName))],
+    evidenceMap: fanout.evidenceMap,
   });
 
   const agentTrace: AgentEvent[] = [
     ...query.log,
     ...evaluation.log,
     ...classification.log,
+    ...fanout.log,
     ...faq.log,
   ];
 
@@ -141,11 +166,13 @@ export async function runLookupAgentPipeline(args: {
       query: query.log,
       evaluation: evaluation.log,
       classification: classification.log,
+      fanout: fanout.log,
       faq: faq.log,
     },
     agentTrace,
     classified: classification.classified,
     intentCounts: classification.intentCounts,
+    evidenceMap: fanout.evidenceMap,
     faqs: faq.faqs,
     ...summary,
   };

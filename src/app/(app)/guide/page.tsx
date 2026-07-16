@@ -47,9 +47,14 @@ const AGENTS = [
     body: "Labels every prompt/answer by intent (best-of, comparison, pricing, alternatives), journey stage, and sentiment.",
   },
   {
+    icon: Network,
+    name: "Fan-out agent",
+    body: "Expands commercial prompts into informational evidence queries and navigational brand-checks — the pattern AI Overviews use before recommending. Recommendation beats citation.",
+  },
+  {
     icon: Sparkles,
     name: "FAQ agent",
-    body: "Turns the run into plain-language FAQs: how often you were mentioned, who leads the category, whether data was live or demo, and what to do next.",
+    body: "Turns the run into plain-language FAQs: how often you were mentioned, who leads the category, fan-out brand-check wins, and what to do next.",
   },
 ];
 
@@ -70,8 +75,8 @@ const STEPS = [
   },
   {
     icon: Bot,
-    title: "3. Run the 4-agent pipeline",
-    body: "Query → Evaluation → Classification → FAQ. You get mention rate, average position, share of voice, intent mix, estimated cost, and an agent trace for every run.",
+    title: "3. Run the agent pipeline",
+    body: "Query → Evaluation → Classification → Fan-out → FAQ. You get mention rate, share of voice, an evidence map of commercial fan-outs, estimated cost, and an agent trace.",
     href: "/lookup",
     linkLabel: "Try a lookup",
   },
@@ -150,8 +155,12 @@ const FAQS = [
     a: "Search returns ten links; answer engines return one synthesized answer. You’re competing for inclusion, favorable position, and accurate framing. BrandSignal measures all three.",
   },
   {
-    q: "What do the four agents do?",
-    a: "Query sends prompts and maintains cost. Evaluation scores mentions and recommendations. Classification labels intent and journey stage. FAQ explains the run in plain language.",
+    q: "What do the agents do?",
+    a: "Query sends prompts and maintains cost. Evaluation scores mentions and recommendations. Classification labels intent and journey stage. Fan-out maps commercial prompts into informational evidence and navigational brand-checks. FAQ explains the run in plain language.",
+  },
+  {
+    q: "What is a fan-out evidence map?",
+    a: "Before recommending, answer engines expand a commercial question into related searches — facts to justify a pick, plus brand-by-name lookups. Being recommended matters more than being cited; your informational pages are often the evidence layer under commercial prompts.",
   },
 ];
 
@@ -198,7 +207,7 @@ export default function GuidePage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <Badge tone="accent">OTT demo · Streamora</Badge>
                 <Badge tone="info">Live + opt-in demo lookup</Badge>
-                <Badge tone="positive">4-agent pipeline</Badge>
+                <Badge tone="positive">5-agent pipeline</Badge>
               </div>
             </div>
           </div>
@@ -307,7 +316,15 @@ export default function GuidePage() {
             },
             {
               term: "Citation",
-              def: "A source the model points to when justifying an answer.",
+              def: "A source the model points to when justifying an answer — useful, but recommendation is the commercial goal.",
+            },
+            {
+              term: "Fan-out",
+              def: "Related searches an answer engine runs under a commercial prompt: informational evidence plus navigational brand-checks.",
+            },
+            {
+              term: "Evidence map",
+              def: "The tree of fan-out queries under a commercial root — what proof and brand pages engines need before recommending you.",
             },
             {
               term: "Entity",

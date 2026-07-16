@@ -14,6 +14,31 @@ describe("on-demand category lookup", () => {
     expect(peersForCategory("pets")).toEqual(expect.arrayContaining(["Chewy", "Pedigree"]));
   });
 
+  it("generates OTT-specific Streamora prompts", () => {
+    const branded = generateLookupPrompts({
+      brand: "Streamora",
+      category: "OTT streaming",
+      country: "United States",
+      promptLimit: 6,
+    });
+    expect(branded).toHaveLength(6);
+    expect(branded.some((prompt) => /OTT|streaming|cord-cut/i.test(prompt.text))).toBe(true);
+    expect(branded.some((prompt) => /Streamora/i.test(prompt.text))).toBe(true);
+  });
+
+  it("builds realistic OTT mock answers with citations", () => {
+    const mock = buildMockLookupAnswer({
+      prompt: "What is the best OTT streaming service in 2026?",
+      brand: "Streamora",
+      category: "OTT streaming",
+      peers: ["Netflix", "Hulu", "Disney+", "Max"],
+      engine: "Perplexity",
+    });
+    expect(mock.text).toMatch(/streaming|OTT|cord|catalog|originals/i);
+    expect(mock.text).not.toMatch(/onboarding|workflows|enterprise/i);
+    expect(mock.sources?.length).toBeGreaterThan(0);
+  });
+
   it("generates brand and category prompts", () => {
     const branded = generateLookupPrompts({
       brand: "Pedigree",

@@ -61,36 +61,73 @@ export function inferCategory(brand: string, category: string) {
   return "consumer brands";
 }
 
+function isOttCategory(category: string) {
+  return /ott|streaming|video|cord.?cut/i.test(category);
+}
+
 export function generateLookupPrompts(input: OnDemandLookupInput) {
   const brand = input.brand.trim();
   const category = inferCategory(brand, input.category);
   const peers = peersForCategory(category, brand || undefined);
   const competitor = peers[0] ?? "a leading alternative";
   const focus = brand || category;
+  const ott = isOttCategory(category);
 
-  const templates = brand
-    ? [
-        `What is the best ${category} for everyday use?`,
-        `Best ${category} brands in ${input.country}`,
-        `${brand} vs ${competitor}: which is better?`,
-        `Is ${brand} good for ${category}?`,
-        `Top alternatives to ${brand}`,
-        `What do people recommend for ${category}?`,
-        `Should I buy ${brand}?`,
-        `Which ${category} brands are most trusted?`,
-        `${category} recommendations for beginners`,
-        `Where should I buy ${category} online?`,
-      ]
-    : [
-        `What are the best ${category} brands right now?`,
-        `Top ${category} recommendations in ${input.country}`,
-        `Which ${category} products do experts recommend?`,
-        `Best value options for ${category}`,
-        `Most trusted ${category} brands`,
-        `${category} buying guide for beginners`,
-        `What should I look for when choosing ${category}?`,
-        `Popular ${category} alternatives worth considering`,
-      ];
+  const brandedOtt = [
+    `What is the best OTT streaming service in 2026?`,
+    `Best streaming platforms for cord-cutters in ${input.country}`,
+    `${brand} vs ${competitor}: which is better for a streaming household?`,
+    `Is ${brand} worth subscribing to?`,
+    `Top Netflix alternatives for originals and discovery`,
+    `Which streaming service has the best personalized recommendations?`,
+    `Should I switch from ${competitor} to ${brand}?`,
+    `${brand} pricing: Standard vs Premium — which plan?`,
+    `Best ${category} for live sports and cord-cutting`,
+    `What do reviewers say about ${brand} originals?`,
+  ];
+
+  const categoryOtt = [
+    `What are the best OTT streaming services right now?`,
+    `Top streaming recommendations in ${input.country}`,
+    `Best value streaming platforms for cord-cutters`,
+    `Which streaming services do experts recommend in 2026?`,
+    `Netflix vs Hulu vs Disney+: which should I pick?`,
+    `Streaming buying guide: ad tier vs premium plans`,
+    `Best platforms for originals and personalized discovery`,
+    `Popular streaming alternatives worth considering`,
+  ];
+
+  const brandedGeneric = [
+    `What is the best ${category} for everyday use?`,
+    `Best ${category} brands in ${input.country}`,
+    `${brand} vs ${competitor}: which is better?`,
+    `Is ${brand} good for ${category}?`,
+    `Top alternatives to ${brand}`,
+    `What do people recommend for ${category}?`,
+    `Should I buy ${brand}?`,
+    `Which ${category} brands are most trusted?`,
+    `${category} recommendations for beginners`,
+    `Where should I buy ${category} online?`,
+  ];
+
+  const categoryGeneric = [
+    `What are the best ${category} brands right now?`,
+    `Top ${category} recommendations in ${input.country}`,
+    `Which ${category} products do experts recommend?`,
+    `Best value options for ${category}`,
+    `Most trusted ${category} brands`,
+    `${category} buying guide for beginners`,
+    `What should I look for when choosing ${category}?`,
+    `Popular ${category} alternatives worth considering`,
+  ];
+
+  const templates = ott
+    ? brand
+      ? brandedOtt
+      : categoryOtt
+    : brand
+      ? brandedGeneric
+      : categoryGeneric;
 
   return templates.slice(0, input.promptLimit).map((text, index) => ({
     id: `lookup-${index + 1}`,
@@ -107,6 +144,18 @@ function hash(value: string) {
   return total;
 }
 
+function engineBias(engine: string, brand: string, prompt: string) {
+  const e = engine.toLowerCase();
+  const brandedPrompt = brand ? prompt.toLowerCase().includes(brand.toLowerCase()) : false;
+  // Gemini often omits challenger brands on generic best-of; Perplexity cites more freely.
+  if (e.includes("gemini") && !brandedPrompt) return -22;
+  if (e.includes("copilot") && !brandedPrompt) return -12;
+  if (e.includes("perplexity")) return 10;
+  if (e.includes("chatgpt")) return 4;
+  if (e.includes("claude")) return 0;
+  return 0;
+}
+
 export function buildMockLookupAnswer(args: {
   prompt: string;
   brand: string;
@@ -119,27 +168,92 @@ export function buildMockLookupAnswer(args: {
   const orderedPeers = [...peers].sort(
     (a, b) => hash(`${engine}:${a}`) - hash(`${engine}:${b}`),
   );
-  const includeBrand = brand
-    ? seed % 100 < (prompt.toLowerCase().includes(brand.toLowerCase()) ? 86 : 58)
-    : false;
+  const ott = isOttCategory(category) || /streamora|netflix|hulu|disney|prime video|\bmax\b/i.test(brand);
+  const baseRate = prompt.toLowerCase().includes(brand.toLowerCase()) ? 86 : ott ? 52 : 58;
+  const includeBrand = brand ? seed % 100 < Math.max(18, Math.min(92, baseRate + engineBias(engine, brand, prompt))) : false;
 
-  const names = includeBrand
-    ? [brand, ...orderedPeers].filter((value, index, list) => list.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index).slice(0, 4)
+  let names = includeBrand
+    ? [brand, ...orderedPeers]
+        .filter((value, index, list) => list.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+        .slice(0, 4)
     : orderedPeers.slice(0, 4);
+
+  // Challengers often land mid-list on generic best-of; named prompts push them higher.
+  if (
+    includeBrand &&
+    brand &&
+    ott &&
+    !prompt.toLowerCase().includes(brand.toLowerCase()) &&
+    names[0]?.toLowerCase() === brand.toLowerCase()
+  ) {
+    const leader = orderedPeers.find((peer) => peer.toLowerCase() !== brand.toLowerCase());
+    if (leader) {
+      names = [leader, ...names.filter((name) => name.toLowerCase() !== leader.toLowerCase())].slice(0, 4);
+      if (!names.some((name) => name.toLowerCase() === brand.toLowerCase())) {
+        names.splice(Math.min(2, names.length), 0, brand);
+        names = names.slice(0, 4);
+      }
+    }
+  }
 
   const leader = names[0];
   const runnerUp = names[1] ?? "another strong option";
-  return {
-    text: `For ${category}, ${leader} is frequently recommended in ${engine} answers because of brand familiarity and availability. ${runnerUp} is often compared for assortment or price. ${
+  const brandPosition = includeBrand
+    ? names.findIndex((name) => name.toLowerCase() === brand.toLowerCase()) + 1
+    : null;
+
+  const citations = ott
+    ? engine.toLowerCase().includes("perplexity")
+      ? ["variety.com", "techradar.com", "reddit.com/r/cordcutters"]
+      : engine.toLowerCase().includes("gemini")
+        ? ["forbes.com", "disneyplus.com"]
+        : ["rottentomatoes.com", "techradar.com", "pcmag.com"]
+    : ["example.com/reviews", "example.com/report"];
+
+  let text: string;
+  if (ott) {
+    if (!includeBrand && brand) {
+      text = `Top picks for ${category} right now usually include ${names.slice(0, 3).join(", ")} depending on catalog depth, price, and household needs. ${engine} answers often lean on well-known catalogs first. ${brand} is less consistently recommended for this exact prompt — stronger comparison pages and third-party citations would help. Sources often referenced: ${citations.join(", ")}.`;
+    } else if (prompt.toLowerCase().includes("vs") || prompt.toLowerCase().includes("versus")) {
+      text = `${leader} vs ${runnerUp}: ${leader} tends to win on ${
+        leader.toLowerCase() === brand.toLowerCase() ? "personalized discovery and Premium plan value" : "catalog breadth and brand familiarity"
+      }, while ${runnerUp} is stronger on ${
+        runnerUp.toLowerCase() === brand.toLowerCase() ? "recommendation quality" : "content volume and recognition"
+      }. For cord-cutters, I recommend checking live-sports windows, ad-tier limits, and originals cadence before committing. Often cited: ${citations.join(", ")}.`;
+    } else if (/pric|plan|subscribe|worth/i.test(prompt)) {
+      text = `For streaming value, ${leader} is frequently recommended because plan tiers are easy to explain and compare. ${
+        includeBrand
+          ? `${brand} shows up when answers discuss Standard vs Premium and whether the household needs live sports.`
+          : `${runnerUp} is the usual runner-up on price-to-catalog tradeoffs.`
+      } Compare ad-supported tiers, concurrent streams, and annual billing before buying. Common sources: ${citations.join(", ")}.`;
+    } else {
+      text = `For ${category}, ${leader} is frequently recommended in ${engine} answers for originals and day-to-day viewing. ${runnerUp} is often compared for catalog breadth or bundled pricing. ${
+        includeBrand
+          ? brandPosition === 1
+            ? `${brand} leads this shortlist when personalized discovery and transparent plans matter.`
+            : `${brand} typically appears around #${brandPosition} — present, but not always the first recommendation.`
+          : `These names dominate common ${category} recommendations.`
+      } I recommend matching the service to household profiles, sports needs, and how much you care about algorithmic discovery. Often cited: ${citations.join(", ")}.`;
+    }
+  } else {
+    text = `For ${category}, ${leader} is frequently recommended in ${engine} answers because of brand familiarity and availability. ${runnerUp} is often compared for assortment or price. ${
       includeBrand
         ? `${brand} appears in this shortlist for shoppers evaluating ${category}.`
         : brand
           ? `${brand} is less consistently cited for this exact prompt.`
           : `These names dominate common ${category} recommendations.`
-    } I recommend comparing ingredients or features, reviews, and total cost before deciding.`,
+    } I recommend comparing features, reviews, and total cost before deciding.`;
+  }
+
+  return {
+    text,
     mentionedNames: names,
     brandMentioned: includeBrand,
-    brandPosition: includeBrand ? names.findIndex((name) => name.toLowerCase() === brand.toLowerCase()) + 1 : null,
+    brandPosition: brandPosition && brandPosition > 0 ? brandPosition : null,
+    sources: citations.map((title) => ({
+      title,
+      url: `https://${title.replace(/^\/+/, "")}`,
+    })),
   };
 }
 

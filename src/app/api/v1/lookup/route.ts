@@ -58,6 +58,7 @@ export async function GET() {
       "query (send prompts + cost ledger)",
       "evaluation (mention/rank scoring)",
       "classification (intent/journey/sentiment)",
+      "fanout (commercial → evidence + navigational map)",
       "faq (explain results)",
     ],
     modes: ["live", "demo"],

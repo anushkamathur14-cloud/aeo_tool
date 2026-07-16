@@ -11,6 +11,8 @@ export type QueryJob = {
   company: string;
   competitors: string[];
   providerId: ProviderId;
+  category?: string;
+  engineLabel?: string;
 };
 
 /**
@@ -37,6 +39,8 @@ export async function runQueryAgent(args: {
         prompt: job.prompt,
         company: job.company,
         competitors: job.competitors,
+        category: job.category,
+        engineLabel: job.engineLabel,
       },
       args.keys,
     );
