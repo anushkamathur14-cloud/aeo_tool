@@ -72,7 +72,7 @@ export default function HomePage() {
         <div className="relative max-w-2xl space-y-4">
           <Badge tone="accent">BrandSignal demo</Badge>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            AI Visibility Intelligence for AEO
+            AI Visibility Intelligence
           </h1>
           <p className="text-sm leading-relaxed text-muted-strong sm:text-base">
             See whether answer engines know your brand, when they recommend you,
