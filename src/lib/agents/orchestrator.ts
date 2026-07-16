@@ -143,6 +143,15 @@ export async function runLookupAgentPipeline(args: {
     totalCostUsd: query.totalCostUsd,
     liveEngines: [...new Set(evaluation.evaluated.map((row) => row.engineName))],
     evidenceMap: fanout.evidenceMap,
+    results: evaluation.evaluated.map((row) => ({
+      prompt: row.prompt,
+      engineName: row.engineName,
+      brandMentioned: row.brandMentioned,
+      brandPosition: row.brandPosition,
+      text: row.text,
+      mentionedNames: row.mentionedNames,
+    })),
+    intentCounts: classification.intentCounts,
   });
 
   const agentTrace: AgentEvent[] = [
@@ -174,6 +183,7 @@ export async function runLookupAgentPipeline(args: {
     intentCounts: classification.intentCounts,
     evidenceMap: fanout.evidenceMap,
     faqs: faq.faqs,
+    appearances: faq.appearances,
     ...summary,
   };
 }

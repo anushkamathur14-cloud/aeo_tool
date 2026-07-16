@@ -92,8 +92,30 @@ describe("lookup agents", () => {
       totalCostUsd: 0,
       liveEngines: [],
       evidenceMap,
+      results: [
+        {
+          prompt: "What is the best OTT platform?",
+          engineName: "ChatGPT",
+          brandMentioned: true,
+          brandPosition: 1,
+          text: "Netflix is often recommended for originals.",
+          mentionedNames: ["Netflix", "Hulu"],
+        },
+        {
+          prompt: "Best value streaming service?",
+          engineName: "Gemini",
+          brandMentioned: false,
+          brandPosition: null,
+          text: "Hulu and Disney+ are frequently recommended.",
+          mentionedNames: ["Hulu", "Disney+"],
+        },
+      ],
+      intentCounts: { "best-of": 2 },
     });
     expect(faqs.faqs.length).toBeGreaterThan(4);
-    expect(faqs.faqs.some((item) => /fan-out/i.test(item.question))).toBe(true);
+    expect(faqs.appearances.length).toBeGreaterThan(0);
+    expect(faqs.faqs.some((item) => /fan-out|show up|missing|share of voice/i.test(item.question))).toBe(
+      true,
+    );
   });
 });

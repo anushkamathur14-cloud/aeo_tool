@@ -76,7 +76,7 @@ const STEPS = [
   {
     icon: Bot,
     title: "3. Run the agent pipeline",
-    body: "Query → Evaluation → Classification → Fan-out → FAQ. You get mention rate, share of voice, an evidence map of commercial fan-outs, estimated cost, and an agent trace.",
+    body: "Query → Evaluation → Classification → Fan-out → FAQ. Results open with stats, then FAQs / where the brand shows up, then a chat agent for follow-up questions.",
     href: "/lookup",
     linkLabel: "Try a lookup",
   },
