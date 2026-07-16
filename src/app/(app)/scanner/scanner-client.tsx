@@ -56,19 +56,19 @@ const DEMO_RESULT: ScanResult = {
   highlights: [
     {
       tone: "positive",
-      text: "NovaCRM entered Gemini's answer for “Best AI-powered CRM tools in 2026” at position #3 — first Gemini gain in 4 weeks.",
+      text: "Streamora entered Gemini's answer for “Best streaming platforms with original series in 2026” at position #3 — first Gemini gain in 4 weeks.",
     },
     {
       tone: "positive",
-      text: "Perplexity now cites novacrm.io/blog on 5 of 12 prompts (up from 4).",
+      text: "Perplexity now cites streamora.com/blog on 5 of 12 prompts (up from 4).",
     },
     {
       tone: "warning",
-      text: "Copilot dropped NovaCRM from “CRM with built-in data enrichment” — HubSpot's Breeze Intelligence took the slot.",
+      text: "Copilot dropped Streamora from “Best streaming service for kids profiles” — Disney+ took the slot.",
     },
     {
       tone: "info",
-      text: "New citation source detected: venturebeat.com now appears on 2 prompts.",
+      text: "New citation source detected: variety.com now appears on 2 prompts.",
     },
   ],
 };
@@ -135,8 +135,8 @@ export function ScannerClient() {
         industry: BRAND.category,
         country: "United States",
         competitors: COMPETITORS.slice(0, 3).map((competitor) => competitor.name),
-        products: ["NovaCRM Growth", "NovaCRM Intelligence"],
-        audience: "fast-growing B2B startups and revenue teams",
+        products: ["Streamora Standard", "Streamora Premium"],
+        audience: "cord-cutters and streaming households in the United States",
         providers: uniqueProviders,
         keys,
         promptLimit: LIVE_PROMPT_CAP,
@@ -276,7 +276,7 @@ export function ScannerClient() {
     <div className="space-y-6">
       <PageHeader
         title="Scanner"
-        description="Ask customer-journey prompts across answer engines and capture how NovaCRM shows up."
+        description="Ask customer-journey prompts across answer engines and capture how Streamora shows up."
         actions={
           phase === "done" ? (
             <Button

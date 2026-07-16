@@ -4,7 +4,7 @@ BrandSignal is an investor-demo-ready AI Visibility Intelligence platform. It sh
 
 ## Features
 
-- Executive visibility dashboard with realistic NovaCRM demo data
+- Executive visibility dashboard with realistic Streamora (OTT) demo data
 - Prompt Explorer with multi-engine answers, citations, mentions, sentiment, and explanations
 - Competitor, entity graph, historical tracking, opportunities, optimizer, and reports
 - Extensible provider adapters for ChatGPT, Claude, Gemini, Grok, and Perplexity

@@ -5,12 +5,12 @@ import { COMPETITORS, SENTIMENT_BREAKDOWN } from "@/lib/demo-data";
 import { CHART_COLORS, ChartTooltip } from "./chart-theme";
 
 const SOV_COLORS: Record<string, string> = {
-  hubspot: CHART_COLORS.hubspot,
-  salesforce: CHART_COLORS.salesforce,
-  pipedrive: CHART_COLORS.pipedrive,
-  novacrm: CHART_COLORS.novacrm,
-  zoho: "#a3e635",
-  attio: CHART_COLORS.attio,
+  netflix: CHART_COLORS.netflix,
+  prime: CHART_COLORS.prime,
+  hulu: CHART_COLORS.hulu,
+  streamora: CHART_COLORS.streamora,
+  disney: CHART_COLORS.disney,
+  max: CHART_COLORS.max,
 };
 
 export function ShareOfVoiceChart() {
@@ -37,7 +37,7 @@ export function ShareOfVoiceChart() {
               <Cell
                 key={entry.id}
                 fill={SOV_COLORS[entry.id]}
-                fillOpacity={entry.id === "novacrm" ? 1 : 0.55}
+                fillOpacity={entry.id === "streamora" ? 1 : 0.55}
               />
             ))}
           </Pie>
@@ -55,7 +55,7 @@ export function ShareOfVoiceChart() {
                 style={{ background: SOV_COLORS[entry.id] }}
               />
               {entry.name}
-              {entry.id === "novacrm" && (
+              {entry.id === "streamora" && (
                 <span className="rounded bg-accent-soft px-1 py-px text-[10px] font-semibold text-accent-strong">
                   You
                 </span>

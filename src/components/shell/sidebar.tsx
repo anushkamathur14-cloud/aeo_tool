@@ -143,7 +143,7 @@ export function Sidebar({
         <div className="border-t border-border p-3">
           <div className="flex items-center gap-2.5 rounded-lg bg-surface-raised px-3 py-2.5">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-info text-xs font-bold text-white">
-              N
+              S
             </div>
             <div className="min-w-0">
               <p className="truncate text-xs font-medium text-foreground">

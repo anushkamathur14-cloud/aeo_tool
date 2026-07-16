@@ -21,13 +21,13 @@ export const metadata: Metadata = { title: "Competitors" };
 
 export default function CompetitorsPage() {
   const sorted = [...COMPETITORS].sort((a, b) => b.shareOfVoice - a.shareOfVoice);
-  const novaRank = sorted.findIndex((c) => c.id === "novacrm") + 1;
+  const streamoraRank = sorted.findIndex((c) => c.id === "streamora") + 1;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Competitors"
-        description={`How NovaCRM stacks up against 5 tracked competitors across the same prompts and engines. Current share-of-voice rank: #${novaRank} of ${sorted.length}.`}
+        description={`How Streamora stacks up against 5 tracked competitors across the same prompts and engines. Current share-of-voice rank: #${streamoraRank} of ${sorted.length}.`}
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
@@ -35,8 +35,8 @@ export default function CompetitorsPage() {
           <CardHeader>
             <CardTitle>Visibility trend vs competitors</CardTitle>
             <CardDescription>
-              Weekly visibility score, 12 weeks. NovaCRM is closing on
-              Pipedrive.
+              Weekly visibility score, 12 weeks. Streamora is closing on
+              Hulu.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -67,7 +67,7 @@ export default function CompetitorsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {sorted.map((comp, idx) => {
-            const isYou = comp.id === "novacrm";
+            const isYou = comp.id === "streamora";
             return (
               <div
                 key={comp.id}

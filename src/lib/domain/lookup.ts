@@ -24,7 +24,11 @@ const CATEGORY_PEERS: Record<string, string[]> = {
   "pet food": ["Pedigree", "Purina", "Royal Canin", "Hill's", "Blue Buffalo", "Chewy"],
   "dog food": ["Pedigree", "Purina Pro Plan", "Royal Canin", "Blue Buffalo", "Hill's", "Chewy"],
   ecommerce: ["Chewy", "Amazon", "Walmart", "Petco", "Petsmart"],
-  crm: ["HubSpot", "Salesforce", "Pipedrive", "Attio", "Zoho", "NovaCRM"],
+  crm: ["HubSpot", "Salesforce", "Pipedrive", "Attio", "Zoho"],
+  ott: ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Streamora"],
+  streaming: ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Streamora"],
+  "streaming video": ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Streamora"],
+  "ott streaming": ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Streamora"],
   coffee: ["Starbucks", "Dunkin", "Peet's", "Blue Bottle", "Nespresso"],
   sneakers: ["Nike", "Adidas", "New Balance", "Hoka", "Allbirds"],
 };
@@ -50,8 +54,10 @@ export function inferCategory(brand: string, category: string) {
   if (["pedigree", "purina", "whiskas", "royal canin", "blue buffalo"].some((item) => lower.includes(item)))
     return "dog food";
   if (["chewy", "petco", "petsmart", "barkbox"].some((item) => lower.includes(item))) return "pets";
-  if (["hubspot", "salesforce", "novacrm", "pipedrive", "attio"].some((item) => lower.includes(item)))
+  if (["hubspot", "salesforce", "pipedrive", "attio"].some((item) => lower.includes(item)))
     return "CRM software";
+  if (["streamora", "netflix", "hulu", "disney", "prime video", "max"].some((item) => lower.includes(item)))
+    return "OTT / streaming video";
   return "consumer brands";
 }
 

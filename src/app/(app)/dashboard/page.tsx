@@ -55,7 +55,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description="How AI answer engines see NovaCRM this week, across ChatGPT, Claude, Perplexity, Gemini, and Copilot."
+        description="How AI answer engines see Streamora this week, across ChatGPT, Claude, Perplexity, Gemini, and Copilot."
       />
 
       {/* KPI row */}
@@ -114,7 +114,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Answer sentiment</CardTitle>
             <CardDescription>
-              Tone of AI answers that mention NovaCRM
+              Tone of AI answers that mention Streamora
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Mention rate by engine</CardTitle>
             <CardDescription>
-              Share of tracked prompts where NovaCRM appears in the answer
+              Share of tracked prompts where Streamora appears in the answer
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -1,11 +1,12 @@
 "use client";
 
 export const CHART_COLORS = {
-  novacrm: "#7c6cf6",
-  hubspot: "#f59e0b",
-  salesforce: "#38bdf8",
-  pipedrive: "#34d399",
-  attio: "#f472b6",
+  streamora: "#2dd4bf",
+  netflix: "#f59e0b",
+  prime: "#38bdf8",
+  hulu: "#34d399",
+  disney: "#a3e635",
+  max: "#f472b6",
   grid: "#23232f",
   axis: "#8b8b9e",
 };

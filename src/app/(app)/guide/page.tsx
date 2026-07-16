@@ -21,7 +21,7 @@ const STEPS = [
   {
     icon: MessageSquareText,
     title: "1. Define the prompts that matter",
-    body: "Start with the questions your buyers actually ask AI assistants — \u201cbest CRM for mid-market\u201d, \u201cNovaCRM vs HubSpot\u201d, \u201cSalesforce alternatives\u201d. BrandSignal tracks each prompt as a keyword-equivalent for the AI era.",
+    body: "Start with the questions your buyers actually ask AI assistants — \u201cbest OTT streaming service\u201d, \u201cStreamora vs Netflix\u201d, \u201cNetflix alternatives\u201d. BrandSignal tracks each prompt as a keyword-equivalent for the AI era.",
     href: "/prompts",
     linkLabel: "Browse tracked prompts",
   },
@@ -109,9 +109,9 @@ export default function GuidePage() {
                 Your buyers stopped Googling. Their AI answers for them.
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-strong">
-                When someone asks ChatGPT for &ldquo;the best CRM for a
-                50-person B2B team&rdquo;, the answer names three or four
-                products — and most buyers never look past it. BrandSignal
+                When someone asks ChatGPT for &ldquo;the best OTT for
+                cord-cutters&rdquo;, the answer names three or four
+                products — and most viewers never look past it. BrandSignal
                 treats that answer as the new search results page: it measures
                 whether you&apos;re in it, how you&apos;re framed, which
                 sources the engine trusted, and exactly what to change to show

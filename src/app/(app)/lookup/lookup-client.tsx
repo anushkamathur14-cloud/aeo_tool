@@ -63,15 +63,28 @@ type LookupResponse = {
     brandPosition: number | null;
     mentionedNames: string[];
   }>;
+  cost?: {
+    totalUsd: number;
+    ledger: Array<{
+      provider: string;
+      model: string;
+      promptTokensEst: number;
+      completionTokensEst: number;
+      costUsd: number;
+    }>;
+  };
+  faqs?: Array<{ question: string; answer: string; confidence: number }>;
+  intentCounts?: Record<string, number>;
+  agentTrace?: Array<{ agent: string; at: string; message: string }>;
 };
 
 const EXAMPLES = [
-  { label: "Pedigree", brand: "Pedigree", category: "dog food" },
+  { label: "Streamora", brand: "Streamora", category: "OTT streaming" },
+  { label: "Netflix", brand: "Netflix", category: "OTT streaming" },
+  { label: "Best OTT", brand: "", category: "best OTT platform" },
+  { label: "Hulu", brand: "Hulu", category: "streaming" },
   { label: "Chewy", brand: "Chewy", category: "pets" },
-  { label: "Pets", brand: "", category: "pets" },
-  { label: "Dogs", brand: "", category: "dogs" },
-  { label: "Dog food", brand: "", category: "dog food" },
-  { label: "Purina", brand: "Purina", category: "pet food" },
+  { label: "Pedigree", brand: "Pedigree", category: "dog food" },
 ];
 
 const PROVIDER_LABELS: Record<StoredProviderId, string> = {
@@ -311,8 +324,8 @@ export function LookupClient({
               title={mode === "live" ? "Run a live brand or category lookup" : "Run a demo lookup"}
               description={
                 mode === "live"
-                  ? "Live mode queries only engines you’ve configured with API keys. Switch to Demo if you just want sample mention counts."
-                  : "Demo mode generates illustrative answers for pets, dogs, Pedigree, Chewy, and similar queries without calling providers."
+                  ? "Live mode runs Query → Evaluation → Classification → FAQ agents against your keyed engines."
+                  : "Demo mode runs the same 4-agent pipeline on sample OTT/streaming answers (Streamora, Netflix, Hulu, etc.)."
               }
             />
           </motion.div>
@@ -348,7 +361,73 @@ export function LookupClient({
               {result.failedEngines?.length ? (
                 <Badge tone="warning">Failed: {result.failedEngines.join(", ")}</Badge>
               ) : null}
+              {typeof result.cost?.totalUsd === "number" ? (
+                <Badge tone="info">Est. cost ${result.cost.totalUsd.toFixed(4)}</Badge>
+              ) : null}
             </div>
+
+            {result.faqs?.length ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>FAQ agent</CardTitle>
+                  <CardDescription>Plain-language answers from this lookup</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {result.faqs.map((faq) => (
+                    <div
+                      key={faq.question}
+                      className="rounded-lg border border-border bg-surface-raised p-4"
+                    >
+                      <p className="text-sm font-medium text-foreground">{faq.question}</p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-muted-strong">{faq.answer}</p>
+                      <p className="mt-2 text-[11px] text-muted">
+                        Confidence {(faq.confidence * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {(result.agentTrace?.length || result.intentCounts) && (
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {result.intentCounts ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Classification agent</CardTitle>
+                      <CardDescription>Intent mix across evaluated answers</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap gap-2">
+                      {Object.entries(result.intentCounts).map(([intent, count]) => (
+                        <Badge key={intent} tone="accent">
+                          {intent}: {count}
+                        </Badge>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ) : null}
+                {result.agentTrace?.length ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Agent trace</CardTitle>
+                      <CardDescription>Query → Evaluation → Classification → FAQ</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {result.agentTrace.slice(-8).map((event, index) => (
+                        <div
+                          key={`${event.at}-${index}`}
+                          className="rounded-md border border-border bg-surface-raised px-3 py-2 text-xs text-muted-strong"
+                        >
+                          <span className="font-semibold capitalize text-foreground">{event.agent}</span>
+                          {" · "}
+                          {event.message}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard

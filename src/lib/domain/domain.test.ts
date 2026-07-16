@@ -26,19 +26,19 @@ describe("BrandSignal domain", () => {
   it("generates a balanced, capped customer-journey prompt set", () => {
     const prompts = generatePrompts(
       {
-        company: "NovaCRM",
-        website: "https://novacrm.example",
-        industry: "CRM software",
+        company: "Streamora",
+        website: "https://streamora.com",
+        industry: "OTT / streaming video",
         country: "United States",
-        competitors: ["HubSpot", "Salesforce"],
-        products: ["NovaCRM Growth"],
-        audience: "B2B startups",
+        competitors: ["Netflix", "Hulu"],
+        products: ["Streamora Standard"],
+        audience: "cord-cutters and streaming households",
       },
       24,
     );
     expect(prompts).toHaveLength(24);
     expect(new Set(prompts.map((prompt) => prompt.stage))).toHaveLength(6);
-    expect(prompts.some((prompt) => prompt.text.includes("NovaCRM"))).toBe(true);
+    expect(prompts.some((prompt) => prompt.text.includes("Streamora"))).toBe(true);
   });
 
   it("prioritizes evidence-backed opportunities", () => {

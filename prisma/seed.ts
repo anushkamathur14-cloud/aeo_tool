@@ -23,24 +23,26 @@ async function main() {
       },
       brands: {
         create: {
-          name: "NovaCRM",
-          website: "https://novacrm.example",
-          industry: "CRM software",
+          name: "Streamora",
+          website: "https://streamora.com",
+          industry: "OTT / streaming video",
           country: "United States",
-          audience: "fast-growing B2B startups and revenue teams",
-          products: ["NovaCRM Growth", "NovaCRM Intelligence"],
+          audience: "cord-cutters and streaming households in the United States",
+          products: ["Streamora Standard", "Streamora Premium"],
           competitors: {
             create: [
-              { name: "HubSpot", website: "https://hubspot.com" },
-              { name: "Salesforce", website: "https://salesforce.com" },
-              { name: "Attio", website: "https://attio.com" },
+              { name: "Netflix", website: "https://netflix.com" },
+              { name: "Amazon Prime Video", website: "https://primevideo.com" },
+              { name: "Hulu", website: "https://hulu.com" },
+              { name: "Disney+", website: "https://disneyplus.com" },
+              { name: "Max", website: "https://max.com" },
             ],
           },
           opportunities: {
             create: [
               {
                 category: "Authority",
-                title: "Earn citations in independent CRM comparisons",
+                title: "Earn citations in independent OTT comparisons",
                 rationale: "Perplexity cites third-party category reports in 64% of purchase answers.",
                 effort: 4,
                 impact: 5,
@@ -49,7 +51,7 @@ async function main() {
               },
               {
                 category: "Comparisons",
-                title: "Publish NovaCRM vs HubSpot for startup teams",
+                title: "Publish Streamora vs Netflix for cord-cutting households",
                 rationale: "Direct comparison prompts account for the largest share-of-answer gap.",
                 effort: 3,
                 impact: 5,

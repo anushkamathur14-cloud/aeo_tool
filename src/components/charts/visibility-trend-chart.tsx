@@ -20,9 +20,9 @@ export function VisibilityTrendChart() {
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={VISIBILITY_TREND} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
         <defs>
-          <linearGradient id="novaFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={CHART_COLORS.novacrm} stopOpacity={0.35} />
-            <stop offset="100%" stopColor={CHART_COLORS.novacrm} stopOpacity={0} />
+          <linearGradient id="streamoraFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={CHART_COLORS.streamora} stopOpacity={0.35} />
+            <stop offset="100%" stopColor={CHART_COLORS.streamora} stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" vertical={false} />
@@ -31,11 +31,11 @@ export function VisibilityTrendChart() {
         <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.grid }} />
         <Area
           type="monotone"
-          dataKey="novacrm"
-          name="NovaCRM"
-          stroke={CHART_COLORS.novacrm}
+          dataKey="streamora"
+          name="Streamora"
+          stroke={CHART_COLORS.streamora}
           strokeWidth={2.5}
-          fill="url(#novaFill)"
+          fill="url(#streamoraFill)"
           dot={false}
           activeDot={{ r: 4 }}
         />
@@ -46,11 +46,12 @@ export function VisibilityTrendChart() {
 
 export function CompetitorTrendChart() {
   const series = [
-    { key: "novacrm", name: "NovaCRM", color: CHART_COLORS.novacrm, width: 2.5 },
-    { key: "hubspot", name: "HubSpot", color: CHART_COLORS.hubspot, width: 1.5 },
-    { key: "salesforce", name: "Salesforce", color: CHART_COLORS.salesforce, width: 1.5 },
-    { key: "pipedrive", name: "Pipedrive", color: CHART_COLORS.pipedrive, width: 1.5 },
-    { key: "attio", name: "Attio", color: CHART_COLORS.attio, width: 1.5 },
+    { key: "streamora", name: "Streamora", color: CHART_COLORS.streamora, width: 2.5 },
+    { key: "netflix", name: "Netflix", color: CHART_COLORS.netflix, width: 1.5 },
+    { key: "prime", name: "Prime Video", color: CHART_COLORS.prime, width: 1.5 },
+    { key: "hulu", name: "Hulu", color: CHART_COLORS.hulu, width: 1.5 },
+    { key: "disney", name: "Disney+", color: CHART_COLORS.disney, width: 1.5 },
+    { key: "max", name: "Max", color: CHART_COLORS.max, width: 1.5 },
   ];
   return (
     <ResponsiveContainer width="100%" height={320}>
@@ -74,7 +75,7 @@ export function CompetitorTrendChart() {
             strokeWidth={s.width}
             dot={false}
             activeDot={{ r: 3.5 }}
-            opacity={s.key === "novacrm" ? 1 : 0.75}
+            opacity={s.key === "streamora" ? 1 : 0.75}
           />
         ))}
       </LineChart>
