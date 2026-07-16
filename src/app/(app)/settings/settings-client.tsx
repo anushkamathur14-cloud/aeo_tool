@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Check,
   Eye,
@@ -166,10 +167,11 @@ export function SettingsClient() {
         <CardHeader>
           <CardTitle>Tracked brand</CardTitle>
           <CardDescription>
-            The sample brand BrandSignal is monitoring across answer engines
+            Demo workspace brand for Dashboard, Competitors, and Opportunities. Looking up another
+            brand in Brand lookup does not replace this sample set.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <div className="flex items-center gap-4 rounded-lg border border-border bg-surface-raised p-4">
             <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-info text-sm font-bold text-white">
               P
@@ -177,13 +179,20 @@ export function SettingsClient() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-semibold text-foreground">{BRAND.name}</p>
-                <Badge tone="accent">Demo</Badge>
+                <Badge tone="accent">Demo brand</Badge>
               </div>
               <p className="text-xs text-muted">
                 {BRAND.domain} · {BRAND.category}
               </p>
             </div>
           </div>
+          <p className="text-xs leading-relaxed text-muted-strong">
+            To measure your own brand, use{" "}
+            <Link href="/lookup" className="font-semibold text-accent-strong hover:underline">
+              Brand lookup
+            </Link>
+            . Competitors page stays Peacock demo data unless we add custom workspaces later.
+          </p>
         </CardContent>
       </Card>
 

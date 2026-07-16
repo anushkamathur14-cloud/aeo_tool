@@ -347,8 +347,8 @@ export function HomeClient() {
             <h2 className="text-lg font-semibold text-foreground">Brand vs competitor</h2>
           </div>
           <p className="mt-2 text-sm text-muted-strong">
-            The view marketing teams use weekly — who gets mentioned, who gets recommended first,
-            and which engines favor whom.
+            Demo view for Peacock vs peers — who gets mentioned, who gets recommended first, and
+            which engines favor whom. Look up your own brand separately in Brand lookup.
           </p>
 
           <div className="mt-5 space-y-4">

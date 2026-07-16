@@ -31,9 +31,10 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { LookupChatPanel } from "@/components/lookup/lookup-chat-panel";
-import { readProviderKeys, type StoredProviderId } from "@/lib/keys";
+import { readProviderKeys, saveLastLookup, type StoredProviderId } from "@/lib/keys";
 import { cn } from "@/lib/utils";
 import type { LookupChatContext } from "@/lib/agents/chat-agent";
+import { BRAND } from "@/lib/demo-data";
 
 type LookupMode = "live" | "demo";
 
@@ -269,6 +270,11 @@ export function LookupClient({
       if (requestId !== requestIdRef.current) return;
       if (!response.ok) throw new Error(payload.error ?? "Lookup failed");
       setResult(payload);
+      saveLastLookup({
+        brand: payload.brand || trimmedBrand,
+        category: payload.category || trimmedCategory,
+        mode: resolvedMode,
+      });
       // Keep the user at the top of results (stats), not scrolled into fan-out/chat.
       requestAnimationFrame(() => {
         resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -533,6 +539,19 @@ export function LookupClient({
                     <span className="font-semibold">{engine}:</span> {message}
                   </p>
                 ))}
+              </div>
+            ) : null}
+
+            {result.brand &&
+            result.brand.toLowerCase() !== BRAND.name.toLowerCase() ? (
+              <div className="rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-xs leading-relaxed text-muted-strong">
+                Looking up <span className="font-medium text-foreground">{result.brand}</span>.
+                Dashboard & Competitors still show the{" "}
+                <span className="font-medium text-foreground">{BRAND.name}</span> demo workspace —{" "}
+                <Link href="/competitors" className="font-semibold text-accent-strong hover:underline">
+                  open Competitors
+                </Link>{" "}
+                for that sample landscape, or keep using lookup for {result.brand}.
               </div>
             ) : null}
 
