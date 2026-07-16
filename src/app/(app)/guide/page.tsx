@@ -3,88 +3,155 @@ import Link from "next/link";
 import {
   ArrowRight,
   Bot,
+  Coins,
+  Layers3,
   Lightbulb,
   MessageSquareText,
   Network,
   Radar,
+  Search,
+  Sparkles,
   Swords,
+  Tags,
   TrendingUp,
   Wand2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "How it works" };
 
-const STEPS = [
+const QUESTIONS = [
+  "Does AI know my brand?",
+  "When does AI recommend me?",
+  "Why are competitors recommended instead?",
+  "What should I change to improve visibility?",
+];
+
+const AGENTS = [
+  {
+    icon: Radar,
+    name: "Query agent",
+    body: "Builds buyer-style prompts for your brand/category, sends them to configured answer engines, and keeps an estimated cost ledger so live runs stay controlled.",
+  },
   {
     icon: MessageSquareText,
-    title: "1. Define the prompts that matter",
-    body: "Start with the questions your buyers actually ask AI assistants — \u201cbest OTT streaming service\u201d, \u201cStreamora vs Netflix\u201d, \u201cNetflix alternatives\u201d. BrandSignal tracks each prompt as a keyword-equivalent for the AI era.",
-    href: "/prompts",
-    linkLabel: "Browse tracked prompts",
+    name: "Evaluation agent",
+    body: "Reads each answer for brand inclusion, mention order, peer brands, and recommendation language — the raw inputs for share of voice.",
+  },
+  {
+    icon: Tags,
+    name: "Classification agent",
+    body: "Labels every prompt/answer by intent (best-of, comparison, pricing, alternatives), journey stage, and sentiment.",
+  },
+  {
+    icon: Sparkles,
+    name: "FAQ agent",
+    body: "Turns the run into plain-language FAQs: how often you were mentioned, who leads the category, whether data was live or demo, and what to do next.",
+  },
+];
+
+const STEPS = [
+  {
+    icon: Search,
+    title: "1. Look up a brand or category",
+    body: "Enter any brand (Streamora, Netflix, Chewy) and/or a category (best OTT platform, pets, dog food). BrandSignal generates realistic buyer prompts — then measures who shows up in the answers.",
+    href: "/lookup",
+    linkLabel: "Open brand lookup",
+  },
+  {
+    icon: Layers3,
+    title: "2. Choose Live or Demo",
+    body: "Live mode queries only engines with your API keys and never silently swaps in sample answers. Demo mode is opt-in sample data for walkthroughs — including the Streamora OTT workspace.",
+    href: "/settings",
+    linkLabel: "Add API keys",
+  },
+  {
+    icon: Bot,
+    title: "3. Run the 4-agent pipeline",
+    body: "Query → Evaluation → Classification → FAQ. You get mention rate, average position, share of voice, intent mix, estimated cost, and an agent trace for every run.",
+    href: "/lookup",
+    linkLabel: "Try a lookup",
   },
   {
     icon: Radar,
-    title: "2. Scan the answer engines",
-    body: "On a weekly schedule (or on demand), BrandSignal asks every tracked prompt across ChatGPT, Claude, Perplexity, Gemini, and Copilot, then parses each answer: was your brand mentioned, at what position, with what sentiment, and citing which sources.",
+    title: "4. Scan tracked prompts across engines",
+    body: "For continuous monitoring, Scanner asks the workspace prompt set across ChatGPT, Claude, Perplexity, Gemini, and Copilot — capturing mentions, sentiment, and citations.",
     href: "/scanner",
     linkLabel: "Run a scan",
   },
   {
     icon: TrendingUp,
-    title: "3. Measure visibility over time",
-    body: "Every scan rolls up into a visibility score — a composite of mention rate and average position. History lets you connect content changes to movement in how engines answer.",
+    title: "5. Track the BrandSignal Visibility Score",
+    body: "Scans roll into a 0–100 visibility score (mention rate, rank, citations, sentiment, competitor share, and more). History shows weekly movement by engine.",
     href: "/history",
-    linkLabel: "See scan history",
+    linkLabel: "See history",
   },
   {
     icon: Swords,
-    title: "4. Benchmark against competitors",
-    body: "The same scans capture every competitor mentioned in every answer, giving you share of voice, head-to-head mention rates, and which engines favor whom.",
+    title: "6. Benchmark OTT competitors",
+    body: "The Streamora demo compares against Netflix, Amazon Prime Video, Hulu, Disney+, and Max — share of voice, head-to-head mentions, and which engines favor whom.",
     href: "/competitors",
-    linkLabel: "View competitor landscape",
+    linkLabel: "View competitors",
   },
   {
     icon: Network,
-    title: "5. Understand your entity graph",
-    body: "Answer engines reason about entities, not keywords. BrandSignal maps which features, categories, audiences, and sources engines associate with your brand — and where the associations are weak.",
+    title: "7. Inspect the entity graph",
+    body: "Answer engines reason about entities. See which features, audiences, and sources models associate with Streamora — and where those associations are weak.",
     href: "/entities",
-    linkLabel: "Explore the entity graph",
+    linkLabel: "Open entity graph",
   },
   {
     icon: Lightbulb,
-    title: "6. Act on ranked opportunities",
-    body: "Findings become a prioritized backlog: citation gaps to close, stale data to fix, content to publish, positioning to reinforce — each with estimated visibility lift.",
+    title: "8. Act on AEO opportunities",
+    body: "Gaps become a prioritized backlog: comparison content, citations, FAQ/schema, crawler access, entity strength — each with expected visibility lift and effort.",
     href: "/opportunities",
-    linkLabel: "Open opportunities",
+    linkLabel: "View AEO opportunities",
   },
   {
     icon: Wand2,
-    title: "7. Optimize content for answers",
-    body: "The Content Optimizer audits any page against answer-engine best practices: extractable paragraphs, question headings, FAQ schema, cited statistics, freshness signals, and crawler access.",
+    title: "9. Optimize pages for answer extraction",
+    body: "Content Optimizer checks citability: short answer snippets, question H2s, FAQ schema, supporting stats, and internal links answer engines can trust.",
     href: "/optimize",
     linkLabel: "Audit a page",
   },
 ];
 
+const DEMO_PATH = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/competitors", label: "Competitors" },
+  { href: "/prompts", label: "One prompt" },
+  { href: "/opportunities", label: "AEO opportunities" },
+  { href: "/lookup", label: "Live/demo lookup" },
+  { href: "/settings", label: "API keys" },
+];
+
 const FAQS = [
   {
     q: "What is AEO?",
-    a: "Answer Engine Optimization — the practice of improving how AI assistants (ChatGPT, Perplexity, Gemini, and others) mention, rank, and describe your brand when users ask them questions. It's SEO for the conversational layer.",
+    a: "Answer Engine Optimization — improving how AI assistants (ChatGPT, Perplexity, Gemini, Claude, Grok, and others) mention, rank, and describe your brand when users ask them questions. It’s SEO for the conversational layer.",
+  },
+  {
+    q: "What’s in the demo workspace?",
+    a: "Demo data follows Streamora, a fictional OTT streaming brand, against Netflix, Amazon Prime Video, Hulu, Disney+, and Max. Use it to tour the product. Switch Brand lookup to Demo for sample OTT answers, or Live when you add keys.",
+  },
+  {
+    q: "If I enter Chewy or Netflix, what happens?",
+    a: "BrandSignal generates category prompts (best dog food / best OTT platform, alternatives, comparisons, pricing, where to buy). Engines answer those prompts. We count how often your brand appears, at what position, and share of voice versus peers.",
+  },
+  {
+    q: "Live vs Demo — what’s the difference?",
+    a: "Live calls only engines you’ve configured with API keys and tracks estimated token cost. Demo is optional sample data for walkthroughs. Live never silently substitutes demo answers.",
   },
   {
     q: "How is this different from SEO rank tracking?",
-    a: "Search returns ten links; answer engines return one synthesized answer. Instead of a page-one ranking, you're competing for inclusion in that answer, a favorable position within it, and accurate framing. BrandSignal measures all three.",
+    a: "Search returns ten links; answer engines return one synthesized answer. You’re competing for inclusion, favorable position, and accurate framing. BrandSignal measures all three.",
   },
   {
-    q: "How often should I scan?",
-    a: "Weekly is the sweet spot for most brands. Engine behavior shifts with model updates and new citations, but daily scans mostly add noise. Run manual scans after publishing major content or shipping pricing changes.",
-  },
-  {
-    q: "Where does the competitive data come from?",
-    a: "Every answer from every scan is parsed for all brand mentions — not just yours. Share of voice and competitor mention rates come from the same underlying answers, so comparisons are apples-to-apples.",
+    q: "What do the four agents do?",
+    a: "Query sends prompts and maintains cost. Evaluation scores mentions and recommendations. Classification labels intent and journey stage. FAQ explains the run in plain language.",
   },
 ];
 
@@ -93,57 +160,101 @@ export default function GuidePage() {
     <div className="space-y-8">
       <PageHeader
         title="How BrandSignal works"
-        description="A practical loop for winning visibility in AI answers: track prompts, scan engines, understand the gaps, then fix them."
+        description="AI Visibility Intelligence for AEO — measure how answer engines talk about your brand, explain why competitors win, and prioritize what to fix."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Link href="/dashboard">
+              <Button variant="primary" size="sm">
+                Open dashboard <ArrowRight className="size-3.5" />
+              </Button>
+            </Link>
+            <Link href="/lookup">
+              <Button variant="secondary" size="sm">
+                Try brand lookup
+              </Button>
+            </Link>
+          </div>
+        }
       />
 
-      {/* Hero explainer */}
       <Card className="relative overflow-hidden">
         <div className="pointer-events-none absolute -top-24 -right-24 size-64 rounded-full bg-accent/15 blur-3xl" />
-        <CardContent className="relative px-6 py-6">
+        <CardContent className="relative space-y-5 px-6 py-6">
           <div className="flex items-start gap-4">
             <div className="hidden size-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft sm:flex">
               <Bot className="size-5 text-accent-strong" />
             </div>
             <div>
               <h2 className="text-base font-semibold text-foreground">
-                Your buyers stopped Googling. Their AI answers for them.
+                Your buyers ask AI — not just Google
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-strong">
-                When someone asks ChatGPT for &ldquo;the best OTT for
-                cord-cutters&rdquo;, the answer names three or four
-                products — and most viewers never look past it. BrandSignal
-                treats that answer as the new search results page: it measures
-                whether you&apos;re in it, how you&apos;re framed, which
-                sources the engine trusted, and exactly what to change to show
-                up more often.
+                When someone asks ChatGPT for &ldquo;the best OTT platform&rdquo;,
+                the answer names a short list — Netflix, Hulu, Prime Video, and
+                maybe Streamora. BrandSignal treats that answer as the new SERP:
+                were you mentioned, at what position, with what framing, citing
+                which sources, and what would raise your AEO visibility next.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <Badge tone="accent">5 answer engines</Badge>
-                <Badge tone="info">Weekly automated scans</Badge>
-                <Badge tone="positive">Prioritized fixes</Badge>
+                <Badge tone="accent">OTT demo · Streamora</Badge>
+                <Badge tone="info">Live + opt-in demo lookup</Badge>
+                <Badge tone="positive">4-agent pipeline</Badge>
               </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+              The four questions
+            </p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {QUESTIONS.map((question, index) => (
+                <div
+                  key={question}
+                  className="rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-muted-strong"
+                >
+                  <span className="mr-2 font-semibold text-accent-strong">{index + 1}.</span>
+                  {question}
+                </div>
+              ))}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Steps */}
       <div>
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">
-          The loop
+          The 4 agents
         </h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {AGENTS.map((agent) => (
+            <Card key={agent.name} className="p-5">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-accent-soft">
+                <agent.icon className="size-4 text-accent-strong" />
+              </div>
+              <h3 className="mt-3 text-sm font-semibold text-foreground">{agent.name}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">{agent.body}</p>
+            </Card>
+          ))}
+        </div>
+        <p className="mt-3 flex items-center gap-2 text-xs text-muted">
+          <Coins className="size-3.5" />
+          Live runs show estimated query cost from the Query agent’s ledger.
+        </p>
+      </div>
+
+      <div>
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">
+          The product loop
+        </h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {STEPS.map((step) => (
             <Card key={step.title} className="flex flex-col p-5">
               <div className="flex size-9 items-center justify-center rounded-lg bg-accent-soft">
-                <step.icon className="size-4.5 text-accent-strong" />
+                <step.icon className="size-4 text-accent-strong" />
               </div>
-              <h3 className="mt-3 text-sm font-semibold text-foreground">
-                {step.title}
-              </h3>
-              <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted">
-                {step.body}
-              </p>
+              <h3 className="mt-3 text-sm font-semibold text-foreground">{step.title}</h3>
+              <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted">{step.body}</p>
               <Link
                 href={step.href}
                 className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-accent-strong hover:underline"
@@ -155,7 +266,66 @@ export default function GuidePage() {
         </div>
       </div>
 
-      {/* FAQ */}
+      <Card className="p-5">
+        <h2 className="text-sm font-semibold text-foreground">Suggested demo path</h2>
+        <p className="mt-1 text-sm text-muted">
+          A fast investor/customer walkthrough using the Streamora OTT sample workspace.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {DEMO_PATH.map((item, index) => (
+            <div key={item.href} className="flex items-center gap-2">
+              <Link href={item.href}>
+                <Badge tone="accent" className="cursor-pointer hover:opacity-90">
+                  {index + 1}. {item.label}
+                </Badge>
+              </Link>
+              {index < DEMO_PATH.length - 1 ? (
+                <ArrowRight className="size-3 text-muted" />
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <div>
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">
+          Glossary
+        </h2>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {[
+            {
+              term: "Mention rate",
+              def: "Share of answers where your brand appears at least once.",
+            },
+            {
+              term: "Share of voice",
+              def: "How often your brand appears versus peers across the same prompt set.",
+            },
+            {
+              term: "Average position",
+              def: "Typical rank order when your brand is listed among recommended options.",
+            },
+            {
+              term: "Citation",
+              def: "A source the model points to when justifying an answer.",
+            },
+            {
+              term: "Entity",
+              def: "A concept models associate with you — product, feature, audience, competitor, or topic.",
+            },
+            {
+              term: "Recommendation strength",
+              def: "How strongly the answer endorses a brand versus merely naming it.",
+            },
+          ].map((item) => (
+            <Card key={item.term} className="p-4">
+              <h3 className="text-sm font-semibold text-foreground">{item.term}</h3>
+              <p className="mt-1 text-sm text-muted">{item.def}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+
       <div>
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">
           Common questions
@@ -164,9 +334,7 @@ export default function GuidePage() {
           {FAQS.map((faq) => (
             <Card key={faq.q} className="p-5">
               <h3 className="text-sm font-semibold text-foreground">{faq.q}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted">
-                {faq.a}
-              </p>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">{faq.a}</p>
             </Card>
           ))}
         </div>
