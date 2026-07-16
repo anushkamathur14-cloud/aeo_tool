@@ -75,7 +75,7 @@ export default async function PromptDetailPage({
       {/* Summary stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="p-4">
-          <p className="text-xs text-muted">Engines mentioning Streamora</p>
+          <p className="text-xs text-muted">Engines mentioning Peacock</p>
           <p className="mt-1 text-xl font-semibold text-foreground">
             {mentionedCount}
             <span className="text-sm font-normal text-muted"> / 5</span>

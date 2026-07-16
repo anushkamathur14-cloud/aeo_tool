@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-accent/20 bg-accent-soft px-4 py-1.5 text-center">
           <Sparkles className="size-3.5 shrink-0 text-accent-strong" />
           <p className="text-xs text-accent-strong">
-            Demo workspace — sample Streamora data. Use the sidebar to open Dashboard, Lookup, Opportunities, and more.
+            Demo workspace — sample Peacock data. Use the sidebar to open Dashboard, Lookup, Opportunities, and more.
           </p>
           <Link href="/guide" className="text-xs font-semibold text-accent-strong underline-offset-2 hover:underline">
             How it works

@@ -172,7 +172,7 @@ export function SettingsClient() {
         <CardContent>
           <div className="flex items-center gap-4 rounded-lg border border-border bg-surface-raised p-4">
             <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-info text-sm font-bold text-white">
-              N
+              P
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">

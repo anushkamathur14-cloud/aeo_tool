@@ -23,12 +23,12 @@ async function main() {
       },
       brands: {
         create: {
-          name: "Streamora",
-          website: "https://streamora.com",
+          name: "Peacock",
+          website: "https://peacocktv.com",
           industry: "OTT / streaming video",
           country: "United States",
           audience: "cord-cutters and streaming households in the United States",
-          products: ["Streamora Standard", "Streamora Premium"],
+          products: ["Peacock Premium", "Peacock Premium Plus"],
           competitors: {
             create: [
               { name: "Netflix", website: "https://netflix.com" },
@@ -51,7 +51,7 @@ async function main() {
               },
               {
                 category: "Comparisons",
-                title: "Publish Streamora vs Netflix for cord-cutting households",
+                title: "Publish Peacock vs Netflix for cord-cutting households",
                 rationale: "Direct comparison prompts account for the largest share-of-answer gap.",
                 effort: 3,
                 impact: 5,

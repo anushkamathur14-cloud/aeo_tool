@@ -56,15 +56,15 @@ const DEMO_RESULT: ScanResult = {
   highlights: [
     {
       tone: "positive",
-      text: "Streamora entered Gemini's answer for “Best streaming platforms with original series in 2026” at position #3 — first Gemini gain in 4 weeks.",
+      text: "Peacock entered Gemini's answer for “Best streaming platforms with original series in 2026” at position #3 — first Gemini gain in 4 weeks.",
     },
     {
       tone: "positive",
-      text: "Perplexity now cites streamora.com/blog on 5 of 12 prompts (up from 4).",
+      text: "Perplexity now cites peacocktv.com/blog on 5 of 12 prompts (up from 4).",
     },
     {
       tone: "warning",
-      text: "Copilot dropped Streamora from “Best streaming service for kids profiles” — Disney+ took the slot.",
+      text: "Copilot dropped Peacock from “Best streaming service for kids profiles” — Disney+ took the slot.",
     },
     {
       tone: "info",
@@ -135,7 +135,7 @@ export function ScannerClient() {
         industry: BRAND.category,
         country: "United States",
         competitors: COMPETITORS.slice(0, 3).map((competitor) => competitor.name),
-        products: ["Streamora Standard", "Streamora Premium"],
+        products: ["Peacock Premium", "Peacock Premium Plus"],
         audience: "cord-cutters and streaming households in the United States",
         providers: uniqueProviders,
         keys,
@@ -276,7 +276,7 @@ export function ScannerClient() {
     <div className="space-y-6">
       <PageHeader
         title="Scanner"
-        description="Ask customer-journey prompts across answer engines and capture how Streamora shows up."
+        description="Ask customer-journey prompts across answer engines and capture how Peacock shows up."
         actions={
           phase === "done" ? (
             <Button

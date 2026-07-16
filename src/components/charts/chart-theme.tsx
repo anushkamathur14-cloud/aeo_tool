@@ -1,7 +1,7 @@
 "use client";
 
 export const CHART_COLORS = {
-  streamora: "#2dd4bf",
+  peacock: "#2dd4bf",
   netflix: "#f59e0b",
   prime: "#38bdf8",
   hulu: "#34d399",

@@ -26,19 +26,19 @@ describe("BrandSignal domain", () => {
   it("generates a balanced, capped customer-journey prompt set", () => {
     const prompts = generatePrompts(
       {
-        company: "Streamora",
-        website: "https://streamora.com",
+        company: "Peacock",
+        website: "https://peacocktv.com",
         industry: "OTT / streaming video",
         country: "United States",
         competitors: ["Netflix", "Hulu"],
-        products: ["Streamora Standard"],
+        products: ["Peacock Premium"],
         audience: "cord-cutters and streaming households",
       },
       24,
     );
     expect(prompts).toHaveLength(24);
     expect(new Set(prompts.map((prompt) => prompt.stage))).toHaveLength(6);
-    expect(prompts.some((prompt) => prompt.text.includes("Streamora"))).toBe(true);
+    expect(prompts.some((prompt) => prompt.text.includes("Peacock"))).toBe(true);
   });
 
   it("prioritizes evidence-backed opportunities", () => {

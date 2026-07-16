@@ -20,9 +20,9 @@ export function VisibilityTrendChart() {
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={VISIBILITY_TREND} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
         <defs>
-          <linearGradient id="streamoraFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={CHART_COLORS.streamora} stopOpacity={0.35} />
-            <stop offset="100%" stopColor={CHART_COLORS.streamora} stopOpacity={0} />
+          <linearGradient id="peacockFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={CHART_COLORS.peacock} stopOpacity={0.35} />
+            <stop offset="100%" stopColor={CHART_COLORS.peacock} stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" vertical={false} />
@@ -31,11 +31,11 @@ export function VisibilityTrendChart() {
         <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.grid }} />
         <Area
           type="monotone"
-          dataKey="streamora"
-          name="Streamora"
-          stroke={CHART_COLORS.streamora}
+          dataKey="peacock"
+          name="Peacock"
+          stroke={CHART_COLORS.peacock}
           strokeWidth={2.5}
-          fill="url(#streamoraFill)"
+          fill="url(#peacockFill)"
           dot={false}
           activeDot={{ r: 4 }}
         />
@@ -46,7 +46,7 @@ export function VisibilityTrendChart() {
 
 export function CompetitorTrendChart() {
   const series = [
-    { key: "streamora", name: "Streamora", color: CHART_COLORS.streamora, width: 2.5 },
+    { key: "peacock", name: "Peacock", color: CHART_COLORS.peacock, width: 2.5 },
     { key: "netflix", name: "Netflix", color: CHART_COLORS.netflix, width: 1.5 },
     { key: "prime", name: "Prime Video", color: CHART_COLORS.prime, width: 1.5 },
     { key: "hulu", name: "Hulu", color: CHART_COLORS.hulu, width: 1.5 },
@@ -75,7 +75,7 @@ export function CompetitorTrendChart() {
             strokeWidth={s.width}
             dot={false}
             activeDot={{ r: 3.5 }}
-            opacity={s.key === "streamora" ? 1 : 0.75}
+            opacity={s.key === "peacock" ? 1 : 0.75}
           />
         ))}
       </LineChart>

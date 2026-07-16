@@ -4,12 +4,12 @@ import { lookupBrandMentions, textMentionsBrand } from "./brand-mentions";
 describe("brand mention lookup", () => {
   it("matches brand names without false substring hits", () => {
     expect(textMentionsBrand("Netflix leads the category", "Netflix")).toBe(true);
-    expect(textMentionsBrand("Streamora includes OTT discovery", "OTT")).toBe(true);
-    expect(textMentionsBrand("Streamora includes discovery", "OTT")).toBe(false);
+    expect(textMentionsBrand("Peacock includes OTT discovery", "OTT")).toBe(true);
+    expect(textMentionsBrand("Peacock includes discovery", "OTT")).toBe(false);
   });
 
-  it("counts Streamora mentions from the demo scan set", () => {
-    const summary = lookupBrandMentions("Streamora");
+  it("counts Peacock mentions from the demo scan set", () => {
+    const summary = lookupBrandMentions("Peacock");
     expect(summary.mentionCount).toBeGreaterThan(0);
     expect(summary.totalAnswers).toBeGreaterThan(summary.mentionCount);
     expect(summary.byEngine).toHaveLength(5);

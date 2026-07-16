@@ -86,7 +86,7 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Top citation sources</CardTitle>
             <CardDescription>
-              Where answer engines learn about Streamora — from the last 30 days
+              Where answer engines learn about Peacock — from the last 30 days
               of scans
             </CardDescription>
           </CardHeader>

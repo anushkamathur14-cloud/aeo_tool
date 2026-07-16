@@ -25,10 +25,10 @@ const CATEGORY_PEERS: Record<string, string[]> = {
   "dog food": ["Pedigree", "Purina Pro Plan", "Royal Canin", "Blue Buffalo", "Hill's", "Chewy"],
   ecommerce: ["Chewy", "Amazon", "Walmart", "Petco", "Petsmart"],
   crm: ["HubSpot", "Salesforce", "Pipedrive", "Attio", "Zoho"],
-  ott: ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Streamora"],
-  streaming: ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Streamora"],
-  "streaming video": ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Streamora"],
-  "ott streaming": ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Streamora"],
+  ott: ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Paramount+"],
+  streaming: ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Paramount+"],
+  "streaming video": ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Paramount+"],
+  "ott streaming": ["Netflix", "Prime Video", "Hulu", "Disney+", "Max", "Paramount+"],
   coffee: ["Starbucks", "Dunkin", "Peet's", "Blue Bottle", "Nespresso"],
   sneakers: ["Nike", "Adidas", "New Balance", "Hoka", "Allbirds"],
 };
@@ -56,7 +56,7 @@ export function inferCategory(brand: string, category: string) {
   if (["chewy", "petco", "petsmart", "barkbox"].some((item) => lower.includes(item))) return "pets";
   if (["hubspot", "salesforce", "pipedrive", "attio"].some((item) => lower.includes(item)))
     return "CRM software";
-  if (["streamora", "netflix", "hulu", "disney", "prime video", "max"].some((item) => lower.includes(item)))
+  if (["peacock", "netflix", "hulu", "disney", "prime video", "max", "paramount"].some((item) => lower.includes(item)))
     return "OTT / streaming video";
   return "consumer brands";
 }
@@ -168,7 +168,7 @@ export function buildMockLookupAnswer(args: {
   const orderedPeers = [...peers].sort(
     (a, b) => hash(`${engine}:${a}`) - hash(`${engine}:${b}`),
   );
-  const ott = isOttCategory(category) || /streamora|netflix|hulu|disney|prime video|\bmax\b/i.test(brand);
+  const ott = isOttCategory(category) || /peacock|netflix|hulu|disney|prime video|\bmax\b/i.test(brand);
   const baseRate = prompt.toLowerCase().includes(brand.toLowerCase()) ? 86 : ott ? 52 : 58;
   const includeBrand = brand ? seed % 100 < Math.max(18, Math.min(92, baseRate + engineBias(engine, brand, prompt))) : false;
 

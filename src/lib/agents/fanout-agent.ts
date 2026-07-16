@@ -46,7 +46,7 @@ function hash(value: string) {
 }
 
 function isOtt(category: string) {
-  return /ott|streaming|video|cord.?cut|streamora|netflix|hulu|disney/i.test(category);
+  return /ott|streaming|video|cord.?cut|peacock|netflix|hulu|disney/i.test(category);
 }
 
 /**

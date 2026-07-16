@@ -8,7 +8,7 @@ const SOV_COLORS: Record<string, string> = {
   netflix: CHART_COLORS.netflix,
   prime: CHART_COLORS.prime,
   hulu: CHART_COLORS.hulu,
-  streamora: CHART_COLORS.streamora,
+  peacock: CHART_COLORS.peacock,
   disney: CHART_COLORS.disney,
   max: CHART_COLORS.max,
 };
@@ -37,7 +37,7 @@ export function ShareOfVoiceChart() {
               <Cell
                 key={entry.id}
                 fill={SOV_COLORS[entry.id]}
-                fillOpacity={entry.id === "streamora" ? 1 : 0.55}
+                fillOpacity={entry.id === "peacock" ? 1 : 0.55}
               />
             ))}
           </Pie>
@@ -55,7 +55,7 @@ export function ShareOfVoiceChart() {
                 style={{ background: SOV_COLORS[entry.id] }}
               />
               {entry.name}
-              {entry.id === "streamora" && (
+              {entry.id === "peacock" && (
                 <span className="rounded bg-accent-soft px-1 py-px text-[10px] font-semibold text-accent-strong">
                   You
                 </span>

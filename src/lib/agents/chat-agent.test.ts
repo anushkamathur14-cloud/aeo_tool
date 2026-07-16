@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { answerLookupChat, type LookupChatContext } from "./chat-agent";
 
 const context: LookupChatContext = {
-  brand: "Streamora",
+  brand: "Peacock",
   category: "OTT streaming",
   mode: "demo",
   mentionCount: 8,
@@ -11,7 +11,7 @@ const context: LookupChatContext = {
   avgPosition: 2.4,
   shareOfVoice: [
     { name: "Netflix", share: 35, count: 7 },
-    { name: "Streamora", share: 28, count: 6 },
+    { name: "Peacock", share: 28, count: 6 },
     { name: "Hulu", share: 18, count: 4 },
   ],
   byEngine: [
@@ -21,8 +21,8 @@ const context: LookupChatContext = {
   ],
   faqs: [
     {
-      question: "How often does Streamora show up?",
-      answer: "Streamora appeared in 40% of answers.",
+      question: "How often does Peacock show up?",
+      answer: "Peacock appeared in 40% of answers.",
     },
   ],
   appearances: [
@@ -31,7 +31,7 @@ const context: LookupChatContext = {
       prompt: "Best OTT streaming service in 2026?",
       engineName: "Perplexity",
       position: 2,
-      snippet: "Streamora is frequently recommended…",
+      snippet: "Peacock is frequently recommended…",
       peers: ["Netflix"],
     },
     {
@@ -49,7 +49,7 @@ const context: LookupChatContext = {
     navigationalShare: 50,
     brandInNavigationalQueries: 4,
     brandWinsNavigational: 3,
-    insight: "Streamora shows up in navigational fan-outs.",
+    insight: "Peacock shows up in navigational fan-outs.",
   },
   results: [
     {
@@ -57,8 +57,8 @@ const context: LookupChatContext = {
       engineName: "Perplexity",
       brandMentioned: true,
       brandPosition: 2,
-      text: "Streamora is frequently recommended for discovery.",
-      mentionedNames: ["Netflix", "Streamora"],
+      text: "Peacock is frequently recommended for discovery.",
+      mentionedNames: ["Netflix", "Peacock"],
     },
     {
       prompt: "Top streaming platforms for cord-cutters",
@@ -74,18 +74,18 @@ const context: LookupChatContext = {
 
 describe("lookup chat agent", () => {
   it("answers mention-rate questions from the run", () => {
-    const result = answerLookupChat("How often does Streamora show up?", context);
+    const result = answerLookupChat("How often does Peacock show up?", context);
     expect(result.answer).toMatch(/40%/);
     expect(result.suggestedFollowUps.length).toBeGreaterThan(0);
   });
 
   it("identifies the weakest engine", () => {
-    const result = answerLookupChat("Which engine is weakest for Streamora?", context);
+    const result = answerLookupChat("Which engine is weakest for Peacock?", context);
     expect(result.answer).toMatch(/Gemini/);
   });
 
   it("explains gaps", () => {
-    const result = answerLookupChat("Where is Streamora missing?", context);
+    const result = answerLookupChat("Where is Peacock missing?", context);
     expect(result.answer).toMatch(/Gemini|cord-cutters|missed/i);
   });
 });

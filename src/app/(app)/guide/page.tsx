@@ -62,14 +62,14 @@ const STEPS = [
   {
     icon: Search,
     title: "1. Look up a brand or category",
-    body: "Enter any brand (Streamora, Netflix, Chewy) and/or a category (best OTT platform, pets, dog food). BrandSignal generates realistic buyer prompts — then measures who shows up in the answers.",
+    body: "Enter any brand (Peacock, Netflix, Chewy) and/or a category (best OTT platform, pets, dog food). BrandSignal generates realistic buyer prompts — then measures who shows up in the answers.",
     href: "/lookup",
     linkLabel: "Open brand lookup",
   },
   {
     icon: Layers3,
     title: "2. Choose Live or Demo",
-    body: "Live mode queries only engines with your API keys and never silently swaps in sample answers. Demo mode is opt-in sample data for walkthroughs — including the Streamora OTT workspace.",
+    body: "Live mode queries only engines with your API keys and never silently swaps in sample answers. Demo mode is opt-in sample data for walkthroughs — including the Peacock OTT workspace.",
     href: "/settings",
     linkLabel: "Add API keys",
   },
@@ -97,14 +97,14 @@ const STEPS = [
   {
     icon: Swords,
     title: "6. Benchmark OTT competitors",
-    body: "The Streamora demo compares against Netflix, Amazon Prime Video, Hulu, Disney+, and Max — share of voice, head-to-head mentions, and which engines favor whom.",
+    body: "The Peacock demo compares against Netflix, Amazon Prime Video, Hulu, Disney+, and Max — share of voice, head-to-head mentions, and which engines favor whom.",
     href: "/competitors",
     linkLabel: "View competitors",
   },
   {
     icon: Network,
     title: "7. Inspect the entity graph",
-    body: "Answer engines reason about entities. See which features, audiences, and sources models associate with Streamora — and where those associations are weak.",
+    body: "Answer engines reason about entities. See which features, audiences, and sources models associate with Peacock — and where those associations are weak.",
     href: "/entities",
     linkLabel: "Open entity graph",
   },
@@ -140,7 +140,7 @@ const FAQS = [
   },
   {
     q: "What’s in the demo workspace?",
-    a: "Demo data follows Streamora, a fictional OTT streaming brand, against Netflix, Amazon Prime Video, Hulu, Disney+, and Max. Use it to tour the product. Switch Brand lookup to Demo for sample OTT answers, or Live when you add keys.",
+    a: "Demo data follows Peacock (peacocktv.com), a real NBCUniversal OTT brand, against Netflix, Amazon Prime Video, Hulu, Disney+, and Max. Use it to tour the product. Switch Brand lookup to Demo for sample OTT answers, or Live when you add keys.",
   },
   {
     q: "If I enter Chewy or Netflix, what happens?",
@@ -200,12 +200,12 @@ export default function GuidePage() {
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-strong">
                 When someone asks ChatGPT for &ldquo;the best OTT platform&rdquo;,
                 the answer names a short list — Netflix, Hulu, Prime Video, and
-                maybe Streamora. BrandSignal treats that answer as the new SERP:
+                maybe Peacock. BrandSignal treats that answer as the new SERP:
                 were you mentioned, at what position, with what framing, citing
                 which sources, and what would raise your AEO visibility next.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <Badge tone="accent">OTT demo · Streamora</Badge>
+                <Badge tone="accent">OTT demo · Peacock</Badge>
                 <Badge tone="info">Live + opt-in demo lookup</Badge>
                 <Badge tone="positive">5-agent pipeline</Badge>
               </div>
@@ -278,7 +278,7 @@ export default function GuidePage() {
       <Card className="p-5">
         <h2 className="text-sm font-semibold text-foreground">Suggested demo path</h2>
         <p className="mt-1 text-sm text-muted">
-          A fast investor/customer walkthrough using the Streamora OTT sample workspace.
+          A fast investor/customer walkthrough using the Peacock OTT sample workspace.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {DEMO_PATH.map((item, index) => (

@@ -48,7 +48,7 @@ function AnimatedValue({ value, suffix = "" }: { value: number; suffix?: string 
 
 const INTEL_METRICS = [
   { label: "Brand Visibility", value: "52", hint: "composite AI visibility score", icon: Eye },
-  { label: "AI Mentions", value: "49%", hint: "prompts where Streamora appears", icon: Quote },
+  { label: "AI Mentions", value: "49%", hint: "prompts where Peacock appears", icon: Quote },
   { label: "Recommendation Rate", value: "38%", hint: "answers that actively recommend", icon: Sparkles },
   { label: "Citation Coverage", value: "31%", hint: "answers citing owned sources", icon: Link2 },
   { label: "Competitor Share", value: "18%", hint: "share of voice vs Netflix & peers", icon: Swords },
@@ -56,7 +56,7 @@ const INTEL_METRICS = [
 ];
 
 const ACTIONS = [
-  { action: "Add Streamora vs Netflix comparison page", impact: "High", effort: "Low" },
+  { action: "Add Peacock vs Netflix comparison page", impact: "High", effort: "Low" },
   { action: "Expand FAQ for cord-cutting & plan tiers", impact: "Medium", effort: "Low" },
   { action: "Add Product + Offer schema on pricing", impact: "Medium", effort: "Low" },
   { action: "Earn third-party citations (TechRadar, Variety)", impact: "High", effort: "High" },
@@ -136,7 +136,7 @@ export function HomeClient() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-medium tracking-wide text-muted uppercase">Brand Pulse</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">Streamora · this week</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">Peacock · this week</p>
               </div>
               <Badge tone="accent">Live demo</Badge>
             </div>
@@ -218,7 +218,7 @@ export function HomeClient() {
               <div className="flex items-start gap-2 rounded-xl border border-negative/25 bg-negative-soft/35 px-3 py-3">
                 <XCircle className="mt-0.5 size-4 shrink-0 text-negative" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Streamora not mentioned</p>
+                  <p className="text-sm font-medium text-foreground">Peacock not mentioned</p>
                   <p className="mt-1 text-xs leading-relaxed text-muted-strong">
                     Weak comparison content · Few third-party citations · Thin entity association
                     with “cord-cutting”
@@ -250,7 +250,7 @@ export function HomeClient() {
                 ))}
               </ul>
               <div className="mt-5 border-t border-border/60 pt-4">
-                <p className="text-xs font-medium text-muted">Suggested actions for Streamora</p>
+                <p className="text-xs font-medium text-muted">Suggested actions for Peacock</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {["Create 3 comparison pages", "Add FAQ schema", "Publish pricing comparison", "Strengthen entity links"].map(
                     (action) => (
@@ -354,7 +354,7 @@ export function HomeClient() {
           <div className="mt-5 space-y-4">
             {[
               { name: "Netflix", mention: 91, position: "#1.3", color: "#e50914" },
-              { name: "Streamora", mention: 49, position: "#2.8", color: "#2dd4bf" },
+              { name: "Peacock", mention: 49, position: "#2.8", color: "#2dd4bf" },
               { name: "Hulu", mention: 74, position: "#2.6", color: "#1ce783" },
             ].map((row) => (
               <div key={row.name} className="space-y-1.5">

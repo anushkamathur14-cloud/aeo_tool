@@ -97,7 +97,7 @@ export async function GET() {
     name: "BrandSignal lookup chat agent",
     description: "Ask follow-up questions grounded in a completed brand/category lookup run.",
     exampleQuestions: [
-      "How often does Streamora show up?",
+      "How often does Peacock show up?",
       "Which engine is weakest?",
       "Where is the brand missing?",
       "Who leads share of voice?",

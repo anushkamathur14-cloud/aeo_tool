@@ -47,14 +47,14 @@ export function EntitiesClient() {
   const [typeFilter, setTypeFilter] = useState<EntityNode["type"] | "all">("all");
 
   const satellites = useMemo(
-    () => ENTITY_NODES.filter((n) => n.id !== "streamora"),
+    () => ENTITY_NODES.filter((n) => n.id !== "peacock"),
     []
   );
 
   // Radial layout: distance from center inversely proportional to strength
   const positions = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
-    map.set("streamora", { x: CENTER, y: CENTER });
+    map.set("peacock", { x: CENTER, y: CENTER });
     satellites.forEach((node, i) => {
       const angle = (i / satellites.length) * Math.PI * 2 - Math.PI / 2;
       const radius = 90 + (100 - node.strength) * 1.55;
@@ -84,7 +84,7 @@ export function EntitiesClient() {
     <div className="space-y-6">
       <PageHeader
         title="Entity Graph"
-        description="What answer engines associate with Streamora — the concepts, audiences, competitors, and sources that co-occur in AI answers. Stronger associations sit closer to the center."
+        description="What answer engines associate with Peacock — the concepts, audiences, competitors, and sources that co-occur in AI answers. Stronger associations sit closer to the center."
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
@@ -105,7 +105,7 @@ export function EntitiesClient() {
                 viewBox={`0 0 ${SIZE} ${SIZE}`}
                 className="w-full"
                 role="img"
-                aria-label="Entity association graph centered on Streamora"
+                aria-label="Entity association graph centered on Peacock"
               >
                 {/* Orbit rings */}
                 {[100, 160, 220].map((r) => (
@@ -210,7 +210,7 @@ export function EntitiesClient() {
                     fontSize={10}
                     fontWeight={700}
                   >
-                    Streamora
+                    Peacock
                   </text>
                 </g>
               </svg>

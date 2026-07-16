@@ -13,11 +13,11 @@ describe("lookup agents", () => {
 
   it("evaluates brand mentions from responses", () => {
     const { evaluated } = runEvaluationAgent({
-      brand: "Streamora",
+      brand: "Peacock",
       items: [
         {
           prompt: "Best OTT platform?",
-          brand: "Streamora",
+          brand: "Peacock",
           peers: ["Netflix", "Hulu"],
           engineId: "chatgpt",
           engineName: "ChatGPT",
@@ -25,10 +25,10 @@ describe("lookup agents", () => {
           result: {
             provider: "mock",
             model: "brandsignal-demo-v1",
-            text: "Streamora and Netflix are strong OTT options; Hulu is solid for TV.",
+            text: "Peacock and Netflix are strong OTT options; Hulu is solid for TV.",
             latencyMs: 10,
             sources: [],
-            mentions: [{ company: "Streamora", order: 1, sentiment: 0.8 }],
+            mentions: [{ company: "Peacock", order: 1, sentiment: 0.8 }],
             recommendationStrength: 0.7,
             confidence: 0.8,
             answerLength: 20,
@@ -42,7 +42,7 @@ describe("lookup agents", () => {
 
   it("builds a commercial fan-out evidence map", () => {
     const { evidenceMap } = runFanoutAgent({
-      brand: "Streamora",
+      brand: "Peacock",
       category: "OTT streaming",
       peers: ["Netflix", "Hulu", "Disney+"],
       commercialRoots: ["What is the best OTT streaming service in 2026?"],

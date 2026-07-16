@@ -113,7 +113,7 @@ type LookupResponse = {
 };
 
 const EXAMPLES = [
-  { label: "Streamora", brand: "Streamora", category: "OTT streaming" },
+  { label: "Peacock", brand: "Peacock", category: "OTT streaming" },
   { label: "Netflix", brand: "Netflix", category: "OTT streaming" },
   { label: "Best OTT", brand: "", category: "best OTT platform" },
   { label: "Hulu", brand: "Hulu", category: "streaming" },
@@ -121,7 +121,7 @@ const EXAMPLES = [
   { label: "Pedigree", brand: "Pedigree", category: "dog food" },
 ];
 
-const DEMO_DEFAULTS = { brand: "Streamora", category: "OTT streaming" };
+const DEMO_DEFAULTS = { brand: "Peacock", category: "OTT streaming" };
 
 const PROVIDER_LABELS: Record<StoredProviderId, string> = {
   openai: "ChatGPT",
@@ -225,7 +225,7 @@ export function LookupClient({
     const resolvedMode = nextMode ?? modeRef.current;
 
     if (trimmedBrand.length < 2 && trimmedCategory.length < 2) {
-      setError("Enter a brand (e.g. Streamora) and/or a category (e.g. OTT streaming).");
+      setError("Enter a brand (e.g. Peacock) and/or a category (e.g. OTT streaming).");
       return;
     }
 
@@ -403,7 +403,7 @@ export function LookupClient({
               <input
                 value={brand}
                 onChange={(event) => setBrand(event.target.value)}
-                placeholder="Brand — Streamora, Netflix, Chewy…"
+                placeholder="Brand — Peacock, Netflix, Chewy…"
                 className="h-11 w-full rounded-lg border border-border bg-surface-raised pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
                 aria-label="Brand name"
               />
@@ -479,7 +479,7 @@ export function LookupClient({
               description={
                 mode === "live"
                   ? "Stats → fan-out → FAQs → chat. Live mode uses only your configured keys."
-                  : "Demo mode loads sample Streamora answers with no API keys."
+                  : "Demo mode loads sample Peacock answers with no API keys."
               }
             />
           </motion.div>

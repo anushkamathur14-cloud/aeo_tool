@@ -65,7 +65,7 @@ export async function GET() {
     modes: ["live", "demo"],
     examples: [
       { brand: "Chewy", category: "pets", mode: "live" },
-      { brand: "Streamora", category: "OTT streaming", mode: "demo" },
+      { brand: "Peacock", category: "OTT streaming", mode: "demo" },
       { category: "best OTT platform", mode: "demo" },
     ],
   });

@@ -43,7 +43,7 @@ const ANALYZE_STEPS = [
 ];
 
 export function OptimizeClient() {
-  const [url, setUrl] = useState("streamora.com/blog/originals-guide");
+  const [url, setUrl] = useState("peacocktv.com/blog/originals-guide");
   const [phase, setPhase] = useState<Phase>("idle");
   const [stepIdx, setStepIdx] = useState(0);
 
