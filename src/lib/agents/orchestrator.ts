@@ -71,26 +71,30 @@ export async function runLookupAgentPipeline(args: {
     mode,
   });
 
-  // Align responses back to engine metadata by index (same nested loop order)
-  const evaluationInputs = query.responses.map((response, index) => {
-    const meta = jobsWithMeta[index];
+  const evaluationInputs = query.responses.map((response) => {
+    const meta = jobsWithMeta.find(
+      (job) => job.prompt === response.prompt && job.providerId === response.providerId,
+    );
     return {
       prompt: response.prompt,
       brand,
       peers,
-      engineId: meta.engineId,
-      engineName: meta.engineName,
-      color: meta.color,
+      engineId: meta?.engineId ?? response.providerId,
+      engineName: meta?.engineName ?? response.engineLabel ?? response.providerId,
+      color: meta?.color ?? "#a3a3a3",
       result: response.result,
     };
   });
 
   const evaluation = runEvaluationAgent({ brand, items: evaluationInputs });
   if (mode === "live" && evaluation.evaluated.length === 0) {
+    const failureHint = query.failures[0]?.error;
     return {
       ok: false as const,
       status: 502 as const,
-      error: "Live lookup returned no evaluable answers. Check API keys and try again.",
+      error: failureHint
+        ? `Live lookup failed: ${failureHint}`
+        : "Live lookup returned no evaluable answers. Check API keys and try again.",
       code: "LIVE_LOOKUP_FAILED",
     };
   }
@@ -166,7 +170,20 @@ export async function runLookupAgentPipeline(args: {
     ok: true as const,
     mode,
     liveEngines: mode === "live" ? [...new Set(evaluation.evaluated.map((row) => row.engineName))] : [],
-    failedEngines: [] as string[],
+    failedEngines:
+      mode === "live"
+        ? [
+            ...new Set(
+              query.failures.map((failure) => failure.engineLabel ?? failure.providerId),
+            ),
+          ]
+        : [],
+    providerErrors:
+      mode === "live"
+        ? Object.fromEntries(
+            [...new Map(query.failures.map((failure) => [failure.engineLabel ?? failure.providerId, failure.error]))],
+          )
+        : {},
     cost: {
       totalUsd: query.totalCostUsd,
       ledger: query.ledger,

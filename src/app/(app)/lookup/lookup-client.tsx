@@ -40,6 +40,7 @@ type LookupResponse = {
   mode: LookupMode;
   liveEngines?: string[];
   failedEngines?: string[];
+  providerErrors?: Record<string, string>;
   brand: string;
   category: string;
   totalAnswers: number;
@@ -437,10 +438,33 @@ export function LookupClient({
               {result.liveEngines?.length ? (
                 <Badge>Engines: {result.liveEngines.join(", ")}</Badge>
               ) : null}
+              {result.failedEngines?.length ? (
+                <Badge tone="warning">Failed: {result.failedEngines.join(", ")}</Badge>
+              ) : null}
               {typeof result.cost?.totalUsd === "number" ? (
                 <Badge tone="info">Est. cost ${result.cost.totalUsd.toFixed(4)}</Badge>
               ) : null}
             </div>
+
+            {result.providerErrors && Object.keys(result.providerErrors).length > 0 ? (
+              <div className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
+                {Object.entries(result.providerErrors).map(([engine, message]) => (
+                  <p key={engine} className="leading-relaxed">
+                    <span className="font-semibold">{engine}:</span> {message}
+                  </p>
+                ))}
+                {result.providerErrors.Gemini || result.providerErrors.google ? (
+                  <p className="mt-1 text-xs">
+                    Tip: in Google AI Studio set Application restrictions to None, then re-test the
+                    key in{" "}
+                    <Link href="/settings" className="font-semibold underline underline-offset-2">
+                      Settings
+                    </Link>
+                    .
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard

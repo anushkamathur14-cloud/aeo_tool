@@ -6,8 +6,10 @@ import {
   Eye,
   EyeOff,
   KeyRound,
+  Loader2,
   Save,
   Trash2,
+  Zap,
 } from "lucide-react";
 import {
   Card,
@@ -42,6 +44,8 @@ export function SettingsClient() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [visible, setVisible] = useState<Record<string, boolean>>({});
   const [savedFlash, setSavedFlash] = useState<string | null>(null);
+  const [testing, setTesting] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<Record<string, { ok: boolean; message: string }>>({});
   const [scanDay, setScanDay] = useState("monday");
   const [emailDigest, setEmailDigest] = useState(true);
   const [loaded, setLoaded] = useState(false);
@@ -54,9 +58,7 @@ export function SettingsClient() {
     }
     setKeys(stored);
     setScanDay(localStorage.getItem(STORAGE_PREFIX + "scanDay") ?? "monday");
-    setEmailDigest(
-      localStorage.getItem(STORAGE_PREFIX + "emailDigest") !== "false"
-    );
+    setEmailDigest(localStorage.getItem(STORAGE_PREFIX + "emailDigest") !== "false");
     setLoaded(true);
   }, []);
 
@@ -66,6 +68,11 @@ export function SettingsClient() {
     localStorage.setItem(STORAGE_PREFIX + id, value);
     setKeys((prev) => ({ ...prev, [id]: value }));
     setDrafts((prev) => ({ ...prev, [id]: "" }));
+    setTestResult((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     setSavedFlash(id);
     setTimeout(() => setSavedFlash(null), 1800);
   };
@@ -78,6 +85,62 @@ export function SettingsClient() {
       return next;
     });
     setVisible((prev) => ({ ...prev, [id]: false }));
+    setTestResult((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const testKey = async (id: string) => {
+    const value = (drafts[id] || keys[id] || "").trim();
+    if (!value) return;
+    if (id !== "google") {
+      setTestResult((prev) => ({
+        ...prev,
+        [id]: { ok: false, message: "Live key test is available for Gemini right now." },
+      }));
+      return;
+    }
+
+    setTesting(id);
+    try {
+      const response = await fetch("/api/v1/providers/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: "google", key: value }),
+      });
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        model?: string;
+        latencyMs?: number;
+        error?: string;
+      };
+      if (!response.ok || !payload.ok) {
+        setTestResult((prev) => ({
+          ...prev,
+          [id]: { ok: false, message: payload.error ?? "Gemini test failed" },
+        }));
+        return;
+      }
+      setTestResult((prev) => ({
+        ...prev,
+        [id]: {
+          ok: true,
+          message: `Connected · ${payload.model} · ${payload.latencyMs}ms`,
+        },
+      }));
+    } catch (error) {
+      setTestResult((prev) => ({
+        ...prev,
+        [id]: {
+          ok: false,
+          message: error instanceof Error ? error.message : "Gemini test failed",
+        },
+      }));
+    } finally {
+      setTesting(null);
+    }
   };
 
   const updateScanDay = (day: string) => {
@@ -99,7 +162,6 @@ export function SettingsClient() {
         description="Workspace configuration. Keys stay in your browser until you run a live scan, when they are sent only over HTTPS to BrandSignal's scan endpoint."
       />
 
-      {/* Brand */}
       <Card>
         <CardHeader>
           <CardTitle>Tracked brand</CardTitle>
@@ -114,18 +176,17 @@ export function SettingsClient() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-foreground">
-                  {BRAND.name}
-                </p>
+                <p className="text-sm font-semibold text-foreground">{BRAND.name}</p>
                 <Badge tone="accent">Demo</Badge>
               </div>
-              <p className="text-xs text-muted">{BRAND.domain} · {BRAND.category}</p>
+              <p className="text-xs text-muted">
+                {BRAND.domain} · {BRAND.category}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* API keys */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -133,11 +194,26 @@ export function SettingsClient() {
             Answer engine API keys
           </CardTitle>
           <CardDescription>
-            Keys are masked after saving and kept in localStorage. When present,
-            Scanner runs a capped hybrid live scan for those engines.
+            Keys are masked after saving and kept in localStorage. When present, Scanner and Brand
+            lookup can run live for those engines.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs leading-relaxed text-muted-strong">
+            Gemini tip: create the key in{" "}
+            <a
+              href="https://aistudio.google.com/apikey"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-accent-strong hover:underline"
+            >
+              Google AI Studio
+            </a>
+            . Set <span className="font-medium text-foreground">Application restrictions = None</span>{" "}
+            (HTTP referrer restrictions break server-side BrandSignal calls). Then use{" "}
+            <span className="font-medium text-foreground">Test</span> below.
+          </div>
+
           {!loaded ? (
             <div className="space-y-3">
               {KEY_FIELDS.map((f) => (
@@ -148,6 +224,7 @@ export function SettingsClient() {
             KEY_FIELDS.map((field) => {
               const saved = keys[field.id];
               const isVisible = visible[field.id];
+              const result = testResult[field.id];
               return (
                 <div
                   key={field.id}
@@ -155,9 +232,7 @@ export function SettingsClient() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">
-                        {field.label}
-                      </p>
+                      <p className="text-sm font-medium text-foreground">{field.label}</p>
                       <Badge>{field.engine}</Badge>
                     </div>
                     {saved ? (
@@ -170,8 +245,8 @@ export function SettingsClient() {
                   </div>
 
                   {saved ? (
-                    <div className="mt-3 flex items-center gap-2">
-                      <code className="flex-1 truncate rounded-md border border-border bg-surface px-3 py-2 font-mono text-xs text-muted-strong">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <code className="min-w-0 flex-1 truncate rounded-md border border-border bg-surface px-3 py-2 font-mono text-xs text-muted-strong">
                         {isVisible ? saved : maskKey(saved)}
                       </code>
                       <Button
@@ -185,22 +260,29 @@ export function SettingsClient() {
                         }
                         aria-label={isVisible ? "Hide key" : "Show key"}
                       >
-                        {isVisible ? (
-                          <EyeOff className="size-3.5" />
-                        ) : (
-                          <Eye className="size-3.5" />
-                        )}
+                        {isVisible ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                       </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => removeKey(field.id)}
-                      >
+                      {field.id === "google" ? (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={testing === field.id}
+                          onClick={() => void testKey(field.id)}
+                        >
+                          {testing === field.id ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Zap className="size-3.5" />
+                          )}
+                          Test
+                        </Button>
+                      ) : null}
+                      <Button variant="danger" size="sm" onClick={() => removeKey(field.id)}>
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>
                   ) : (
-                    <div className="mt-3 flex items-center gap-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                       <input
                         type="password"
                         value={drafts[field.id] ?? ""}
@@ -211,8 +293,23 @@ export function SettingsClient() {
                           }))
                         }
                         placeholder={field.placeholder}
-                        className="h-9 flex-1 rounded-md border border-border bg-surface px-3 font-mono text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
+                        className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 font-mono text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
                       />
+                      {field.id === "google" ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={!drafts[field.id]?.trim() || testing === field.id}
+                          onClick={() => void testKey(field.id)}
+                        >
+                          {testing === field.id ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Zap className="size-3.5" />
+                          )}
+                          Test
+                        </Button>
+                      ) : null}
                       <Button
                         size="sm"
                         variant="primary"
@@ -228,6 +325,17 @@ export function SettingsClient() {
                       </Button>
                     </div>
                   )}
+
+                  {result ? (
+                    <p
+                      className={cn(
+                        "mt-2 text-xs leading-relaxed",
+                        result.ok ? "text-positive" : "text-warning",
+                      )}
+                    >
+                      {result.message}
+                    </p>
+                  ) : null}
                 </div>
               );
             })
@@ -235,39 +343,32 @@ export function SettingsClient() {
         </CardContent>
       </Card>
 
-      {/* Scan schedule */}
       <Card>
         <CardHeader>
           <CardTitle>Scan schedule</CardTitle>
-          <CardDescription>
-            When the weekly automated scan runs (09:00 UTC)
-          </CardDescription>
+          <CardDescription>When the weekly automated scan runs (09:00 UTC)</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="flex flex-wrap gap-1.5">
-            {["monday", "tuesday", "wednesday", "thursday", "friday"].map(
-              (day) => (
-                <button
-                  key={day}
-                  onClick={() => updateScanDay(day)}
-                  className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-colors cursor-pointer",
-                    scanDay === day
-                      ? "bg-accent-soft text-accent-strong"
-                      : "border border-border text-muted hover:bg-surface-hover hover:text-foreground"
-                  )}
-                >
-                  {day}
-                </button>
-              )
-            )}
+            {["monday", "tuesday", "wednesday", "thursday", "friday"].map((day) => (
+              <button
+                key={day}
+                onClick={() => updateScanDay(day)}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-colors cursor-pointer",
+                  scanDay === day
+                    ? "bg-accent-soft text-accent-strong"
+                    : "border border-border text-muted hover:bg-surface-hover hover:text-foreground",
+                )}
+              >
+                {day}
+              </button>
+            ))}
           </div>
 
           <div className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-4">
             <div>
-              <p className="text-sm font-medium text-foreground">
-                Weekly email digest
-              </p>
+              <p className="text-sm font-medium text-foreground">Weekly email digest</p>
               <p className="text-xs text-muted">
                 Send the visibility summary after each scheduled scan
               </p>
@@ -278,13 +379,13 @@ export function SettingsClient() {
               onClick={toggleDigest}
               className={cn(
                 "relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer",
-                emailDigest ? "bg-accent" : "bg-surface-hover border border-border-strong"
+                emailDigest ? "bg-accent" : "bg-surface-hover border border-border-strong",
               )}
             >
               <span
                 className={cn(
                   "absolute top-0.5 size-5 rounded-full bg-white transition-transform",
-                  emailDigest ? "translate-x-5.5" : "translate-x-0.5"
+                  emailDigest ? "translate-x-5.5" : "translate-x-0.5",
                 )}
               />
             </button>
@@ -292,13 +393,10 @@ export function SettingsClient() {
         </CardContent>
       </Card>
 
-      {/* Tracked engines */}
       <Card>
         <CardHeader>
           <CardTitle>Tracked engines</CardTitle>
-          <CardDescription>
-            Engines included in scans and reporting
-          </CardDescription>
+          <CardDescription>Engines included in scans and reporting</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -307,14 +405,9 @@ export function SettingsClient() {
                 key={engine.id}
                 className="flex items-center gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3"
               >
-                <span
-                  className="size-2.5 rounded-full"
-                  style={{ background: engine.color }}
-                />
+                <span className="size-2.5 rounded-full" style={{ background: engine.color }} />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    {engine.name}
-                  </p>
+                  <p className="text-sm font-medium text-foreground">{engine.name}</p>
                   <p className="text-[11px] text-muted">{engine.vendor}</p>
                 </div>
                 <Badge tone="positive">Active</Badge>

@@ -89,6 +89,23 @@ function hashQuick(value: string) {
   return total;
 }
 
+function extractProviderError(status: number, body: string, providerName: string) {
+  try {
+    const parsed = JSON.parse(body) as {
+      error?: { message?: string; status?: string; code?: number };
+      message?: string;
+    };
+    const message = parsed.error?.message ?? parsed.message;
+    if (message) return `${providerName} request failed (${status}): ${message}`;
+  } catch {
+    // ignore non-JSON bodies
+  }
+  const clipped = body.trim().slice(0, 240);
+  return clipped
+    ? `${providerName} request failed (${status}): ${clipped}`
+    : `${providerName} request failed (${status})`;
+}
+
 type RemoteConfig = {
   id: Exclude<ProviderId, "mock">;
   name: string;
@@ -107,10 +124,10 @@ class RemoteProvider implements AIProvider {
     this.name = config.name;
   }
   isConfigured(keys: ProviderKeys) {
-    return Boolean(keys[this.id]);
+    return Boolean(keys[this.id]?.trim());
   }
   async complete(input: PromptInput, keys: ProviderKeys) {
-    const key = keys[this.id];
+    const key = keys[this.id]?.trim();
     if (!key) throw new Error(`${this.name} API key is not configured`);
     const started = performance.now();
     const response = await fetch(this.config.endpoint, {
@@ -119,10 +136,131 @@ class RemoteProvider implements AIProvider {
       body: JSON.stringify(this.config.body(this.config.model, input.prompt)),
       signal: AbortSignal.timeout(45_000),
     });
-    if (!response.ok) throw new Error(`${this.name} request failed (${response.status})`);
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(extractProviderError(response.status, body, this.name));
+    }
     const payload: unknown = await response.json();
     const text = this.config.read(payload);
+    if (!text.trim()) throw new Error(`${this.name} returned an empty answer`);
     return normalize(this.id, this.config.model, text, Math.round(performance.now() - started), input);
+  }
+}
+
+/** Stable Gemini model cascade — first available wins. */
+export const GEMINI_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-flash-latest",
+  "gemini-1.5-flash",
+] as const;
+
+class GoogleGeminiProvider implements AIProvider {
+  id = "google" as const;
+  name = "Gemini";
+
+  isConfigured(keys: ProviderKeys) {
+    return Boolean(keys.google?.trim());
+  }
+
+  async complete(input: PromptInput, keys: ProviderKeys) {
+    const key = keys.google?.trim();
+    if (!key) throw new Error("Gemini API key is not configured");
+    if (!/^AIza[0-9A-Za-z_-]{10,}/.test(key)) {
+      throw new Error(
+        "Gemini key looks invalid. Paste a Google AI Studio key that starts with AIza…",
+      );
+    }
+
+    const started = performance.now();
+    let lastError = "Gemini request failed";
+
+    for (const model of GEMINI_MODELS) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": key,
+        },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: input.prompt }] }],
+        }),
+        signal: AbortSignal.timeout(45_000),
+      });
+
+      if (!response.ok) {
+        const body = await response.text();
+        lastError = extractProviderError(response.status, body, "Gemini");
+        // Try next model when this one is missing / not supported for the key.
+        if (
+          response.status === 404 ||
+          /not found|is not found|not supported|UNKNOWN_MODEL/i.test(lastError)
+        ) {
+          continue;
+        }
+        throw new Error(annotateGeminiError(lastError));
+      }
+
+      const payload: unknown = await response.json();
+      const text = textAt(payload, ["candidates", 0, "content", "parts", 0, "text"]);
+      if (!text.trim()) {
+        const blockReason = String(
+          valueAt(payload, ["promptFeedback", "blockReason"]) ??
+            valueAt(payload, ["candidates", 0, "finishReason"]) ??
+            "",
+        );
+        throw new Error(
+          blockReason
+            ? `Gemini returned no text (finish/block: ${blockReason})`
+            : "Gemini returned an empty answer",
+        );
+      }
+      return normalize("google", model, text, Math.round(performance.now() - started), input);
+    }
+
+    throw new Error(annotateGeminiError(lastError));
+  }
+}
+
+function annotateGeminiError(message: string) {
+  if (/API_KEY_HTTP_REFERRER_BLOCKED|referer|referrer/i.test(message)) {
+    return `${message} — In Google AI Studio, set Application restrictions to None (server-side BrandSignal calls have no browser referrer).`;
+  }
+  if (/API_KEY_INVALID|API key not valid|PERMISSION_DENIED|API_KEY_SERVICE_BLOCKED/i.test(message)) {
+    return `${message} — Create a new key in Google AI Studio (aistudio.google.com/apikey) with Generative Language API access, restrictions = None.`;
+  }
+  if (/quota|RESOURCE_EXHAUSTED|rate/i.test(message)) {
+    return `${message} — Gemini quota may be exhausted for this project.`;
+  }
+  return message;
+}
+
+/** Lightweight key probe used by Settings → Test. */
+export async function verifyGeminiKey(apiKey: string) {
+  const key = apiKey.trim();
+  if (!key) return { ok: false as const, error: "Paste a Gemini API key first." };
+  try {
+    const provider = new GoogleGeminiProvider();
+    const result = await provider.complete(
+      {
+        prompt: "Reply with exactly: ok",
+        company: "BrandSignal",
+        competitors: [],
+      },
+      { google: key },
+    );
+    return {
+      ok: true as const,
+      model: result.model,
+      latencyMs: result.latencyMs,
+      preview: result.text.slice(0, 80),
+    };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "Gemini verification failed",
+    };
   }
 }
 
@@ -159,15 +297,7 @@ export const providers: AIProvider[] = [
     body: (model, prompt) => ({ model, max_tokens: 900, messages: [{ role: "user", content: prompt }] }),
     read: (payload) => textAt(payload, ["content", 0, "text"]),
   }),
-  new RemoteProvider({
-    id: "google",
-    name: "Gemini",
-    model: "gemini-2.0-flash",
-    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-    headers: (key) => ({ "Content-Type": "application/json", "x-goog-api-key": key }),
-    body: (_model, prompt) => ({ contents: [{ parts: [{ text: prompt }] }] }),
-    read: (payload) => textAt(payload, ["candidates", 0, "content", "parts", 0, "text"]),
-  }),
+  new GoogleGeminiProvider(),
   new RemoteProvider({
     id: "xai",
     name: "Grok",

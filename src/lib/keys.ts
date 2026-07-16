@@ -15,7 +15,7 @@ export function readProviderKeys(): Partial<Record<StoredProviderId, string>> {
   if (typeof window === "undefined") return {};
   const keys: Partial<Record<StoredProviderId, string>> = {};
   for (const id of ["openai", "anthropic", "google", "xai", "perplexity"] as const) {
-    const value = localStorage.getItem(STORAGE_PREFIX + id);
+    const value = localStorage.getItem(STORAGE_PREFIX + id)?.trim();
     if (value) keys[id] = value;
   }
   return keys;

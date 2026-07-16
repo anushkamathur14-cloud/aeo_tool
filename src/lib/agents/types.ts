@@ -19,7 +19,10 @@ export type CostLedgerEntry = {
 export const MODEL_COST_PER_MILLION: Record<string, { input: number; output: number }> = {
   "gpt-4.1-mini": { input: 0.4, output: 1.6 },
   "claude-3-5-haiku-latest": { input: 0.8, output: 4 },
+  "gemini-2.5-flash": { input: 0.15, output: 0.6 },
   "gemini-2.0-flash": { input: 0.1, output: 0.4 },
+  "gemini-flash-latest": { input: 0.15, output: 0.6 },
+  "gemini-1.5-flash": { input: 0.075, output: 0.3 },
   "grok-3-mini": { input: 0.3, output: 0.5 },
   sonar: { input: 1, output: 1 },
   "brandsignal-demo-v1": { input: 0, output: 0 },
