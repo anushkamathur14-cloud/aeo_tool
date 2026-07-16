@@ -26,9 +26,11 @@ export async function runLookupAgentPipeline(args: {
   input: OnDemandLookupInput & { mode: "live" | "demo" };
   keys: ProviderKeys;
 }) {
-  const { input, keys } = args;
+  const { input, keys: rawKeys } = args;
   const brand = input.brand.trim();
   const mode = input.mode;
+  // Hard-isolate demo from any client-supplied keys.
+  const keys = mode === "demo" ? ({} as ProviderKeys) : rawKeys;
   const promptLimit = mode === "live" ? Math.min(input.promptLimit, 4) : input.promptLimit;
   const prompts = generateLookupPrompts({ ...input, promptLimit });
   const category = prompts[0]?.category ?? input.category;

@@ -31,7 +31,8 @@ export async function POST(request: Request) {
         promptLimit: input.promptLimit,
         mode: input.mode,
       },
-      keys: input.keys as ProviderKeys,
+      // Demo never receives or uses provider keys — sample answers only.
+      keys: (input.mode === "demo" ? {} : input.keys) as ProviderKeys,
     });
 
     if (!result.ok) {

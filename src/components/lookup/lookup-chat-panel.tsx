@@ -45,7 +45,11 @@ export function LookupChatPanel({ context }: { context: LookupChatContext }) {
   }, [brand, context.mode, context.mentionCount, context.category]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Keep chat scrolled inside its panel — never jump the page to fan-out/chat.
+    const node = bottomRef.current;
+    const scroller = node?.parentElement;
+    if (!scroller || !node) return;
+    scroller.scrollTop = scroller.scrollHeight;
   }, [messages, isSending]);
 
   const ask = async (question: string) => {

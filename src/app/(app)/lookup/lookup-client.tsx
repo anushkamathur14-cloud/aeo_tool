@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Building2,
+  Coins,
   Eye,
   GitBranch,
   KeyRound,
@@ -120,6 +121,8 @@ const EXAMPLES = [
   { label: "Pedigree", brand: "Pedigree", category: "dog food" },
 ];
 
+const DEMO_DEFAULTS = { brand: "Streamora", category: "OTT streaming" };
+
 const PROVIDER_LABELS: Record<StoredProviderId, string> = {
   openai: "ChatGPT",
   anthropic: "Claude",
@@ -169,6 +172,12 @@ function toChatContext(result: LookupResponse): LookupChatContext {
   };
 }
 
+function formatCost(usd: number) {
+  if (usd <= 0) return "$0.00";
+  if (usd < 0.01) return `$${usd.toFixed(4)}`;
+  return `$${usd.toFixed(3)}`;
+}
+
 export function LookupClient({
   initialBrand = "",
   initialCategory = "",
@@ -176,46 +185,58 @@ export function LookupClient({
   initialBrand?: string;
   initialCategory?: string;
 }) {
-  const [brand, setBrand] = useState(initialBrand);
-  const [category, setCategory] = useState(initialCategory);
-  const [mode, setMode] = useState<LookupMode>("live");
+  const [brand, setBrand] = useState(initialBrand || DEMO_DEFAULTS.brand);
+  const [category, setCategory] = useState(initialCategory || DEMO_DEFAULTS.category);
+  const [mode, setMode] = useState<LookupMode>("demo");
   const [configuredProviders, setConfiguredProviders] = useState<StoredProviderId[]>([]);
   const [result, setResult] = useState<LookupResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const resultsTopRef = useRef<HTMLDivElement>(null);
+  const requestIdRef = useRef(0);
+  const skipNextDemoDebounce = useRef(false);
+  const brandRef = useRef(brand);
+  const categoryRef = useRef(category);
+  const modeRef = useRef(mode);
+  brandRef.current = brand;
+  categoryRef.current = category;
+  modeRef.current = mode;
 
-  useEffect(() => {
+  const chatContext = useMemo(() => (result ? toChatContext(result) : null), [result]);
+
+  const refreshKeys = useCallback(() => {
     const keys = readProviderKeys();
     setConfiguredProviders(
       (Object.keys(keys) as StoredProviderId[]).filter((id) => Boolean(keys[id])),
     );
   }, []);
 
-  const chatContext = useMemo(
-    () => (result ? toChatContext(result) : null),
-    [result],
-  );
+  useEffect(() => {
+    refreshKeys();
+  }, [refreshKeys]);
 
-  const refreshKeys = () => {
-    const keys = readProviderKeys();
-    setConfiguredProviders(
-      (Object.keys(keys) as StoredProviderId[]).filter((id) => Boolean(keys[id])),
-    );
-  };
+  const runLookup = useCallback(async (
+    nextBrand?: string,
+    nextCategory?: string,
+    nextMode?: LookupMode,
+  ) => {
+    const trimmedBrand = (nextBrand ?? brandRef.current).trim();
+    const trimmedCategory = (nextCategory ?? categoryRef.current).trim();
+    const resolvedMode = nextMode ?? modeRef.current;
 
-  const runLookup = async (nextBrand = brand, nextCategory = category, nextMode = mode) => {
-    const trimmedBrand = nextBrand.trim();
-    const trimmedCategory = nextCategory.trim();
     if (trimmedBrand.length < 2 && trimmedCategory.length < 2) {
       setError("Enter a brand (e.g. Streamora) and/or a category (e.g. OTT streaming).");
       return;
     }
 
-    const keys = readProviderKeys();
-    const providers = (Object.keys(keys) as StoredProviderId[]).filter((id) => Boolean(keys[id]));
-    setConfiguredProviders(providers);
+    const keys = resolvedMode === "live" ? readProviderKeys() : {};
+    const providers =
+      resolvedMode === "live"
+        ? (Object.keys(keys) as StoredProviderId[]).filter((id) => Boolean(keys[id]))
+        : [];
+    if (resolvedMode === "live") setConfiguredProviders(providers);
 
-    if (nextMode === "live" && providers.length === 0) {
+    if (resolvedMode === "live" && providers.length === 0) {
       setError("Live mode needs API keys. Add them in Settings, or switch to Demo mode.");
       setResult(null);
       return;
@@ -223,9 +244,10 @@ export function LookupClient({
 
     setBrand(trimmedBrand);
     setCategory(trimmedCategory);
-    setMode(nextMode);
+    setMode(resolvedMode);
     setError(null);
     setIsLoading(true);
+    const requestId = ++requestIdRef.current;
 
     try {
       const response = await fetch("/api/v1/lookup", {
@@ -234,30 +256,77 @@ export function LookupClient({
         body: JSON.stringify({
           brand: trimmedBrand,
           category: trimmedCategory,
-          mode: nextMode,
-          promptLimit: nextMode === "live" ? 4 : 6,
-          keys: nextMode === "live" ? keys : {},
+          mode: resolvedMode,
+          promptLimit: resolvedMode === "live" ? 4 : 6,
+          // Demo never sends API keys.
+          keys: resolvedMode === "live" ? keys : {},
         }),
       });
       const payload = (await response.json()) as LookupResponse & {
         error?: string;
         code?: string;
       };
+      if (requestId !== requestIdRef.current) return;
       if (!response.ok) throw new Error(payload.error ?? "Lookup failed");
       setResult(payload);
+      // Keep the user at the top of results (stats), not scrolled into fan-out/chat.
+      requestAnimationFrame(() => {
+        resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       setResult(null);
       setError(err instanceof Error ? err.message : "Lookup failed");
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) setIsLoading(false);
     }
+  }, []);
+
+  // Auto-run demo on first mount.
+  useEffect(() => {
+    skipNextDemoDebounce.current = true;
+    void runLookup(DEMO_DEFAULTS.brand, DEMO_DEFAULTS.category, "demo");
+  }, [runLookup]);
+
+  // When brand/category change in demo mode, re-run automatically (debounced).
+  useEffect(() => {
+    if (mode !== "demo") return;
+    if (skipNextDemoDebounce.current) {
+      skipNextDemoDebounce.current = false;
+      return;
+    }
+    const trimmedBrand = brand.trim();
+    const trimmedCategory = category.trim();
+    if (trimmedBrand.length < 2 && trimmedCategory.length < 2) return;
+
+    const timer = window.setTimeout(() => {
+      void runLookup(trimmedBrand, trimmedCategory, "demo");
+    }, 550);
+    return () => window.clearTimeout(timer);
+  }, [brand, category, mode, runLookup]);
+
+  const selectMode = (nextMode: LookupMode) => {
+    setError(null);
+    if (nextMode === "demo") {
+      const nextBrand = brand.trim() || DEMO_DEFAULTS.brand;
+      const nextCategory = category.trim() || DEMO_DEFAULTS.category;
+      skipNextDemoDebounce.current = true;
+      setMode("demo");
+      setBrand(nextBrand);
+      setCategory(nextCategory);
+      void runLookup(nextBrand, nextCategory, "demo");
+      return;
+    }
+    setMode("live");
+    setResult(null);
+    refreshKeys();
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Brand & category lookup"
-        description="Live lookups query your configured answer engines. Demo mode is optional sample data only when you choose it."
+        description="Demo runs sample answers with no API keys. Live queries only the engines you’ve configured."
       />
 
       <Card>
@@ -268,12 +337,7 @@ export function LookupClient({
               <div className="mt-1.5 inline-flex rounded-lg border border-border bg-surface-raised p-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    setMode("live");
-                    setResult(null);
-                    setError(null);
-                    refreshKeys();
-                  }}
+                  onClick={() => selectMode("live")}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
                     mode === "live"
@@ -286,11 +350,7 @@ export function LookupClient({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setMode("demo");
-                    setResult(null);
-                    setError(null);
-                  }}
+                  onClick={() => selectMode("demo")}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
                     mode === "demo"
@@ -324,7 +384,7 @@ export function LookupClient({
               ) : (
                 <span className="inline-flex items-center gap-1.5">
                   <Sparkles className="size-3.5 text-accent-strong" />
-                  Demo mode uses sample answers only — not live model data.
+                  Demo uses sample answers only — API keys are ignored.
                 </span>
               )}
             </div>
@@ -334,6 +394,7 @@ export function LookupClient({
             className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_auto]"
             onSubmit={(event) => {
               event.preventDefault();
+              skipNextDemoDebounce.current = true;
               void runLookup();
             }}
           >
@@ -362,10 +423,10 @@ export function LookupClient({
               {isLoading
                 ? mode === "live"
                   ? "Querying live…"
-                  : "Running demo…"
+                  : "Updating demo…"
                 : mode === "live"
                   ? "Look up live"
-                  : "Look up demo"}
+                  : "Run demo"}
             </Button>
           </form>
 
@@ -374,13 +435,27 @@ export function LookupClient({
               <button
                 key={example.label}
                 type="button"
-                onClick={() => void runLookup(example.brand, example.category, mode)}
-                className="rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-muted-strong transition-colors hover:border-accent/40 hover:text-foreground cursor-pointer"
+                onClick={() => {
+                  skipNextDemoDebounce.current = true;
+                  void runLookup(example.brand, example.category, mode);
+                }}
+                className={cn(
+                  "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+                  brand === example.brand && category === example.category
+                    ? "border-accent/50 bg-accent-soft text-accent-strong"
+                    : "border-border bg-surface-raised text-muted-strong hover:border-accent/40 hover:text-foreground",
+                )}
               >
                 {example.label}
               </button>
             ))}
           </div>
+
+          {mode === "demo" ? (
+            <p className="text-[11px] text-muted">
+              Demo re-runs automatically when you change brand or category.
+            </p>
+          ) : null}
 
           {error ? (
             <div className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
@@ -400,11 +475,11 @@ export function LookupClient({
           <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <EmptyState
               icon={Search}
-              title={mode === "live" ? "Run a live brand or category lookup" : "Run a demo lookup"}
+              title={mode === "live" ? "Run a live brand or category lookup" : "Preparing demo…"}
               description={
                 mode === "live"
-                  ? "After the run: stats first, then FAQs / where the brand shows up, then a chat agent for follow-ups."
-                  : "Demo mode returns realistic OTT sample answers, then the same stats → FAQ → chat flow."
+                  ? "Stats → fan-out → FAQs → chat. Live mode uses only your configured keys."
+                  : "Demo mode loads sample Streamora answers with no API keys."
               }
             />
           </motion.div>
@@ -412,26 +487,34 @@ export function LookupClient({
 
         {isLoading ? (
           <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <Card className="flex items-center justify-center gap-3 py-16 text-sm text-muted">
-              <Loader2 className="size-5 animate-spin text-accent-strong" />
-              {mode === "live"
-                ? "Asking live answer engines and counting brand mentions…"
-                : "Generating demo answers and counting mentions…"}
+            <Card className="space-y-4 p-6">
+              <div className="flex items-center gap-3 text-sm text-muted">
+                <Loader2 className="size-5 animate-spin text-accent-strong" />
+                {mode === "live"
+                  ? "Asking live answer engines and measuring mentions…"
+                  : "Generating demo answers — no API keys used…"}
+              </div>
+              <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="skeleton h-24 rounded-xl" />
+                ))}
+              </div>
             </Card>
           </motion.div>
         ) : null}
 
         {result && !isLoading && chatContext ? (
           <motion.div
-            key={`${result.mode}-${result.brand}-${result.category}-${result.mentionCount}`}
+            key={`${result.mode}-${result.brand}-${result.category}-${result.mentionCount}-${result.totalAnswers}`}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            {/* 1. Meta + stats */}
+            <div ref={resultsTopRef} className="scroll-mt-4" />
+
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={result.mode === "live" ? "positive" : "accent"}>
-                {result.mode === "live" ? "Live data" : "Demo data"}
+                {result.mode === "live" ? "Live data" : "Demo · no API keys"}
               </Badge>
               <Badge tone="info">{result.category}</Badge>
               {result.brand ? <Badge>{result.brand}</Badge> : <Badge>Category scan</Badge>}
@@ -440,9 +523,6 @@ export function LookupClient({
               ) : null}
               {result.failedEngines?.length ? (
                 <Badge tone="warning">Failed: {result.failedEngines.join(", ")}</Badge>
-              ) : null}
-              {typeof result.cost?.totalUsd === "number" ? (
-                <Badge tone="info">Est. cost ${result.cost.totalUsd.toFixed(4)}</Badge>
               ) : null}
             </div>
 
@@ -453,20 +533,11 @@ export function LookupClient({
                     <span className="font-semibold">{engine}:</span> {message}
                   </p>
                 ))}
-                {result.providerErrors.Gemini || result.providerErrors.google ? (
-                  <p className="mt-1 text-xs">
-                    Tip: in Google AI Studio set Application restrictions to None, then re-test the
-                    key in{" "}
-                    <Link href="/settings" className="font-semibold underline underline-offset-2">
-                      Settings
-                    </Link>
-                    .
-                  </p>
-                ) : null}
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {/* 1. Stats — including measured query cost */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <StatCard
                 label={result.brand ? "Brand mentions" : "Answers scanned"}
                 value={result.brand ? `${result.mentionCount}` : `${result.totalAnswers}`}
@@ -494,6 +565,16 @@ export function LookupClient({
                     : "No brands extracted"
                 }
                 icon={Building2}
+              />
+              <StatCard
+                label="Query cost"
+                value={formatCost(result.cost?.totalUsd ?? 0)}
+                hint={
+                  result.mode === "demo"
+                    ? "Measured metric · demo is $0 (no provider calls)"
+                    : "Measured from estimated tokens × public list prices"
+                }
+                icon={Coins}
               />
             </div>
 
@@ -551,77 +632,7 @@ export function LookupClient({
               </Card>
             </div>
 
-            {/* 2. FAQs + where the brand shows up */}
-            {result.faqs?.length ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>FAQs people ask</CardTitle>
-                  <CardDescription>
-                    Plain-language answers about inclusion, competitors, and where{" "}
-                    {result.brand || "brands"} show up
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {result.faqs.map((faq) => (
-                    <div
-                      key={faq.question}
-                      className="rounded-lg border border-border bg-surface-raised p-4"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-foreground">{faq.question}</p>
-                        {faq.kind ? (
-                          <Badge tone="info" className="capitalize">
-                            {faq.kind}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <p className="mt-1.5 text-sm leading-relaxed text-muted-strong">{faq.answer}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ) : null}
-
-            {result.appearances?.length ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Where the brand shows up</CardTitle>
-                  <CardDescription>
-                    Prompt + engine contexts with mentions and gaps from this run
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                  {result.appearances.map((item, index) => (
-                    <div
-                      key={`${item.kind}-${item.engineName}-${index}`}
-                      className="rounded-lg border border-border bg-surface-raised p-4"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge tone={item.kind === "mentioned" ? "positive" : "warning"}>
-                          {item.kind === "mentioned" ? "Mentioned" : "Missed"}
-                        </Badge>
-                        <Badge>{item.engineName}</Badge>
-                        {item.position ? <Badge tone="info">#{item.position}</Badge> : null}
-                        {item.peers.slice(0, 2).map((peer) => (
-                          <Badge key={peer} tone="info">
-                            {peer}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="mt-2 text-sm font-medium text-foreground">{item.prompt}</p>
-                      <p className="mt-1.5 text-sm leading-relaxed text-muted-strong">
-                        {item.snippet}
-                      </p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ) : null}
-
-            {/* 3. Chat agent */}
-            <LookupChatPanel context={chatContext} />
-
-            {/* Secondary detail */}
+            {/* 2. Fan-out early — right after stats */}
             {result.evidenceMap ? (
               <Card>
                 <CardHeader>
@@ -630,7 +641,8 @@ export function LookupClient({
                     Fan-out evidence map
                   </CardTitle>
                   <CardDescription>
-                    Commercial prompts expand into informational proof and navigational brand-checks
+                    After commercial prompts, engines expand into informational proof and navigational
+                    brand-checks before recommending
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -708,7 +720,77 @@ export function LookupClient({
               </Card>
             ) : null}
 
-            <details className="rounded-xl border border-border bg-surface">
+            {/* 3. FAQs + appearance context */}
+            {result.faqs?.length ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>FAQs people ask</CardTitle>
+                  <CardDescription>
+                    Plain-language answers about inclusion, competitors, and where{" "}
+                    {result.brand || "brands"} show up
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {result.faqs.map((faq) => (
+                    <div
+                      key={faq.question}
+                      className="rounded-lg border border-border bg-surface-raised p-4"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">{faq.question}</p>
+                        {faq.kind ? (
+                          <Badge tone="info" className="capitalize">
+                            {faq.kind}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <p className="mt-1.5 text-sm leading-relaxed text-muted-strong">{faq.answer}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {result.appearances?.length ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Where the brand shows up</CardTitle>
+                  <CardDescription>
+                    Prompt + engine contexts with mentions and gaps from this run
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                  {result.appearances.map((item, index) => (
+                    <div
+                      key={`${item.kind}-${item.engineName}-${index}`}
+                      className="rounded-lg border border-border bg-surface-raised p-4"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge tone={item.kind === "mentioned" ? "positive" : "warning"}>
+                          {item.kind === "mentioned" ? "Mentioned" : "Missed"}
+                        </Badge>
+                        <Badge>{item.engineName}</Badge>
+                        {item.position ? <Badge tone="info">#{item.position}</Badge> : null}
+                        {item.peers.slice(0, 2).map((peer) => (
+                          <Badge key={peer} tone="info">
+                            {peer}
+                          </Badge>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-foreground">{item.prompt}</p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-muted-strong">
+                        {item.snippet}
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {/* 4. Chat */}
+            <LookupChatPanel context={chatContext} />
+
+            <details className="rounded-xl border border-border/60 bg-surface">
               <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-foreground">
                 Answer samples & agent trace
               </summary>
